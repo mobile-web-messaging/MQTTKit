@@ -22,7 +22,9 @@
 
 @class MQTTClient;
 
-@protocol MQTTClientDelegate
+@protocol MQTTClientDelegate <NSObject>
+
+@optional
 
 - (void) client:(MQTTClient *)client didConnect: (NSUInteger)code;
 - (void) client:(MQTTClient *)client didDisconnect: (NSUInteger)code;
@@ -45,7 +47,7 @@
 @property (readwrite, copy) NSString *password;
 @property (readwrite, assign) unsigned short keepAlive;
 @property (readwrite, assign) BOOL cleanSession;
-@property (readwrite, assign) id<MQTTClientDelegate> delegate;
+@property (nonatomic, weak) id<MQTTClientDelegate> delegate;
 
 + (void) initialize;
 + (NSString*) version;
