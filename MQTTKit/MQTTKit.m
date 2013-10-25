@@ -37,6 +37,7 @@
 
 @implementation MQTTClient
 
+@synthesize clientID;
 @synthesize host;
 @synthesize port;
 @synthesize username;
@@ -46,6 +47,8 @@
 @synthesize delegate;
 @synthesize connected;
 
+// dispatch queue to run the mosquitto_loop_forever.
+dispatch_queue_t queue;
 
 static void on_connect(struct mosquitto *mosq, void *obj, int rc)
 {
@@ -116,11 +119,13 @@ static void on_unsubscribe(struct mosquitto *mosq, void *obj, int message_id)
 
 - (MQTTClient*) initWithClientId: (NSString*) clientId {
     if ((self = [super init])) {
-        const char* cstrClientId = [clientId cStringUsingEncoding:NSUTF8StringEncoding];
+        self.clientID = clientId;
         [self setHost: nil];
         [self setPort: 1883];
         [self setKeepAlive: 60];
         [self setCleanSession: YES]; //NOTE: this isdisable clean to keep the broker remember this client
+
+        const char* cstrClientId = [self.clientID cStringUsingEncoding:NSUTF8StringEncoding];
 
         mosq = mosquitto_new(cstrClientId, cleanSession, (__bridge void *)(self));
         mosquitto_connect_callback_set(mosq, on_connect);
@@ -129,6 +134,8 @@ static void on_unsubscribe(struct mosquitto *mosq, void *obj, int message_id)
         mosquitto_message_callback_set(mosq, on_message);
         mosquitto_subscribe_callback_set(mosq, on_subscribe);
         mosquitto_unsubscribe_callback_set(mosq, on_unsubscribe);
+
+        queue = dispatch_queue_create(cstrClientId, NULL);
     }
     return self;
 }
@@ -149,10 +156,7 @@ static void on_unsubscribe(struct mosquitto *mosq, void *obj, int message_id)
 
     mosquitto_connect(mosq, cstrHost, port, keepAlive);
 
-    // Setup timer to handle network events
-    // FIXME: better way to do this - hook into iOS Run Loop select() ?
-    // or run in seperate thread?
-    dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^{
+    dispatch_async(queue, ^{
         NSLog(@"start loop");
         mosquitto_loop_forever(mosq, 10, 1);
         NSLog(@"end loop");

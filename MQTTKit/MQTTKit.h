@@ -44,6 +44,7 @@
     struct mosquitto *mosq;
 }
 
+@property (readwrite, copy) NSString *clientID;
 @property (readwrite, copy) NSString *host;
 @property (readwrite, assign) unsigned short port;
 @property (readwrite, copy) NSString *username;
