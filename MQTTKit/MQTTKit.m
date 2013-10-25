@@ -52,9 +52,7 @@ static void on_connect(struct mosquitto *mosq, void *obj, int rc)
     MQTTClient* client = (__bridge MQTTClient*)obj;
     NSLog(@"on_connect rc = %d", rc);
     client.connected = YES;
-    if ([client.delegate respondsToSelector:@selector(client:didConnect:)]) {
-        [client.delegate client:client didConnect:rc];
-    }
+    [client.delegate client:client didConnect:rc];
 }
 
 static void on_disconnect(struct mosquitto *mosq, void *obj, int rc)

@@ -24,13 +24,16 @@
 
 @protocol MQTTClientDelegate <NSObject>
 
+- (void) client:(MQTTClient *)client didConnect: (NSUInteger)code;
+
 @optional
 
-- (void) client:(MQTTClient *)client didConnect: (NSUInteger)code;
 - (void) client:(MQTTClient *)client didDisconnect: (NSUInteger)code;
+
 - (void) client:(MQTTClient *)client didPublish: (NSUInteger)messageID;
 
 - (void) client:(MQTTClient *)client didReceiveMessage: (MQTTMessage*)message;
+
 - (void) client:(MQTTClient *)client didSubscribe: (NSUInteger)messageID grantedQos:(NSArray*)qos;
 - (void) client:(MQTTClient *)client didUnsubscribe: (NSUInteger)messageID;
 
