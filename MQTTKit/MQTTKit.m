@@ -50,7 +50,7 @@ static void on_connect(struct mosquitto *mosq, void *obj, int rc)
     MQTTClient* client = (__bridge MQTTClient*)obj;
     NSLog(@"on_connect rc = %d", rc);
     client.connected = YES;
-    [[client delegate] didConnect:(NSUInteger)rc];
+    [client.delegate client:client didConnect:rc];
 }
 
 static void on_disconnect(struct mosquitto *mosq, void *obj, int rc)
@@ -58,39 +58,36 @@ static void on_disconnect(struct mosquitto *mosq, void *obj, int rc)
     MQTTClient* client = (__bridge MQTTClient*)obj;
     NSLog(@"on_disconnect rc = %d", rc);
     client.connected = NO;
-    [[client delegate] didDisconnect];
+    [client.delegate client:client didDisconnect:rc];
 }
 
 static void on_publish(struct mosquitto *mosq, void *obj, int message_id)
 {
     MQTTClient* client = (__bridge MQTTClient*)obj;
-    [[client delegate] didPublish:(NSUInteger)message_id];
+    [client.delegate client:client didPublish:message_id];
 }
 
-static void on_message(struct mosquitto *mosq, void *obj, const struct mosquitto_message *message)
+static void on_message(struct mosquitto *mosq, void *obj, const struct mosquitto_message *mosq_msg)
 {
-    MQTTMessage *mosq_msg = [[MQTTMessage alloc] init];
-    mosq_msg.topic = [NSString stringWithUTF8String: message->topic];
-    mosq_msg.payload = [[NSString alloc] initWithBytes:message->payload
-                                                 length:message->payloadlen
+    MQTTMessage *message = [[MQTTMessage alloc] init];
+    message.topic = [NSString stringWithUTF8String: mosq_msg->topic];
+    message.payload = [[NSString alloc] initWithBytes:mosq_msg->payload
+                                                 length:mosq_msg->payloadlen
                                                encoding:NSUTF8StringEncoding];
     MQTTClient* client = (__bridge MQTTClient*)obj;
-
-    //[[client delegate] didReceiveMessage:payload topic:topic];
-    [[client delegate] didReceiveMessage:mosq_msg];
+    [client.delegate client:client didReceiveMessage:message];
 }
 
 static void on_subscribe(struct mosquitto *mosq, void *obj, int message_id, int qos_count, const int *granted_qos)
 {
     MQTTClient* client = (__bridge MQTTClient*)obj;
-    // FIXME: implement this
-    [[client delegate] didSubscribe:message_id grantedQos:nil];
+    [client.delegate client:client didSubscribe:message_id grantedQos:nil];
 }
 
 static void on_unsubscribe(struct mosquitto *mosq, void *obj, int message_id)
 {
     MQTTClient* client = (__bridge MQTTClient*)obj;
-    [[client delegate] didUnsubscribe:message_id];
+    [client.delegate client:client didUnsubscribe:message_id];
 }
 
 

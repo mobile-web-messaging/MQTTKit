@@ -29,15 +29,17 @@
 
 @end
 
+@class MQTTClient;
+
 @protocol MQTTClientDelegate
 
-- (void) didConnect: (NSUInteger)code;
-- (void) didDisconnect;
-- (void) didPublish: (NSUInteger)messageId;
+- (void) client:(MQTTClient *)client didConnect: (NSUInteger)code;
+- (void) client:(MQTTClient *)client didDisconnect: (NSUInteger)code;
+- (void) client:(MQTTClient *)client didPublish: (NSUInteger)messageID;
 
-- (void) didReceiveMessage: (MQTTMessage*)mosq_msg;
-- (void) didSubscribe: (NSUInteger)messageId grantedQos:(NSArray*)qos;
-- (void) didUnsubscribe: (NSUInteger)messageId;
+- (void) client:(MQTTClient *)client didReceiveMessage: (MQTTMessage*)message;
+- (void) client:(MQTTClient *)client didSubscribe: (NSUInteger)messageID grantedQos:(NSArray*)qos;
+- (void) client:(MQTTClient *)client didUnsubscribe: (NSUInteger)messageID;
 
 @end
 

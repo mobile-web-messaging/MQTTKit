@@ -121,33 +121,38 @@ MQTTClient *client;
 
 #pragma mark MQTTClientDelegate
 
-- (void) didConnect: (NSUInteger)code {
+- (void) client:(MQTTClient *)client didConnect: (NSUInteger)code
+{
     NSLog(@"%s", __PRETTY_FUNCTION__);
     dispatch_semaphore_signal(self.connected);
 }
 
-- (void) didDisconnect {
+- (void) client:(MQTTClient *)client didDisconnect: (NSUInteger)code
+{
     NSLog(@"%s", __PRETTY_FUNCTION__);
     dispatch_semaphore_signal(self.disconnected);
 }
 
-- (void) didPublish: (NSUInteger)messageId {
+- (void) client:(MQTTClient *)client didPublish: (NSUInteger)messageID
+{
     NSLog(@"%s", __PRETTY_FUNCTION__);
     dispatch_semaphore_signal(self.published);
 }
 
-- (void) didReceiveMessage: (MQTTMessage*)mosq_msg {
+- (void) client:(MQTTClient *)client didReceiveMessage: (MQTTMessage*)aMessage {
     NSLog(@"%s", __PRETTY_FUNCTION__);
     dispatch_semaphore_signal(self.received);
-    self.message = mosq_msg;
+    self.message = aMessage;
 }
 
-- (void) didSubscribe: (NSUInteger)messageId grantedQos:(NSArray*)qos {
+- (void) client:(MQTTClient *)client didSubscribe: (NSUInteger)messageID grantedQos:(NSArray*)qos
+{
     NSLog(@"%s", __PRETTY_FUNCTION__);
     dispatch_semaphore_signal(self.subscribed);
 }
 
-- (void) didUnsubscribe: (NSUInteger)messageId {
+- (void) client:(MQTTClient *)client didUnsubscribe: (NSUInteger)messageID
+{
     NSLog(@"%s", __PRETTY_FUNCTION__);
     dispatch_semaphore_signal(self.unsubscribed);
 }
