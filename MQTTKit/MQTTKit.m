@@ -16,12 +16,14 @@
 
 -(id)init
 {
-    self.mid = 0;
+    if ((self = [super init])) {
+            self.mid = 0;
     self.topic = nil;
     self.payload = nil;
     self.payloadlen = 0;
     self.qos = 0;
     self.retained = FALSE;
+    }
     return self;
 }
 
@@ -117,7 +119,6 @@ static void on_unsubscribe(struct mosquitto *mosq, void *obj, int message_id)
         mosquitto_message_callback_set(mosq, on_message);
         mosquitto_subscribe_callback_set(mosq, on_subscribe);
         mosquitto_unsubscribe_callback_set(mosq, on_unsubscribe);
-        timer = nil;
     }
     return self;
 }
@@ -212,11 +213,6 @@ static void on_unsubscribe(struct mosquitto *mosq, void *obj, int message_id)
     if (mosq) {
         mosquitto_destroy(mosq);
         mosq = NULL;
-    }
-
-    if (timer) {
-        [timer invalidate];
-        timer = nil;
     }
 }
 

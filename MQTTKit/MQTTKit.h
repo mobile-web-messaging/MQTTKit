@@ -8,19 +8,10 @@
 //
 
 @interface MQTTMessage : NSObject
-{
-    unsigned short mid;
-    NSString *topic;
-    NSString *payload;
-    unsigned short payloadlen;
-    unsigned short qos;
-    BOOL retained;
-}
-
 
 @property (readwrite, assign) unsigned short mid;
-@property (readwrite, retain) NSString *topic;
-@property (readwrite, retain) NSString *payload;
+@property (readwrite, copy) NSString *topic;
+@property (readwrite, copy) NSString *payload;
 @property (readwrite, assign) unsigned short payloadlen;
 @property (readwrite, assign) unsigned short qos;
 @property (readwrite, assign) BOOL retained;
@@ -46,28 +37,18 @@
 
 @interface MQTTClient : NSObject {
     struct mosquitto *mosq;
-    NSString *host;
-    unsigned short port;
-    NSString *username;
-    NSString *password;
-    unsigned short keepAlive;
-    BOOL cleanSession;
-
-    __unsafe_unretained id<MQTTClientDelegate> delegate;
-    NSTimer *timer;
 }
 
-@property (readwrite,retain) NSString *host;
-@property (readwrite,assign) unsigned short port;
-@property (readwrite,retain) NSString *username;
-@property (readwrite,retain) NSString *password;
-@property (readwrite,assign) unsigned short keepAlive;
-@property (readwrite,assign) BOOL cleanSession;
-@property (readwrite,assign) id<MQTTClientDelegate> delegate;
+@property (readwrite, copy) NSString *host;
+@property (readwrite, assign) unsigned short port;
+@property (readwrite, copy) NSString *username;
+@property (readwrite, copy) NSString *password;
+@property (readwrite, assign) unsigned short keepAlive;
+@property (readwrite, assign) BOOL cleanSession;
+@property (readwrite, assign) id<MQTTClientDelegate> delegate;
 
 + (void) initialize;
 + (NSString*) version;
-
 
 - (MQTTClient*) initWithClientId: (NSString *)clientId;
 - (void) setMessageRetry: (NSUInteger)seconds;

@@ -1,0 +1,6 @@
+[
+  "-project", "MQTTKit.xcodeproj",
+  "-scheme", "MQTTKit",
+  "-sdk", "iphonesimulator",
+  "-arch", "i386"
+]
