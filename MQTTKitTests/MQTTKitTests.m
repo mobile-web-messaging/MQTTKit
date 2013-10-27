@@ -12,6 +12,18 @@
 #define secondsToNanoseconds(t) (t * 1000000000ull) // in nanoseconds
 #define gotSignal(semaphore, timeout) ((dispatch_semaphore_wait(semaphore, dispatch_time(DISPATCH_TIME_NOW, secondsToNanoseconds(timeout)))) == 0l)
 
+#define M2M 1
+
+#if M2M
+
+#define kHost @"m2m.eclipse.org"
+
+#else
+
+#define kHost @"localhost"
+
+#endif
+
 @interface MQTTKitTests : XCTestCase<MQTTClientDelegate>
 
 @property(nonatomic, strong) dispatch_semaphore_t connected;
@@ -30,6 +42,7 @@
 @synthesize message;
 
 MQTTClient *client;
+NSString *topic;
 
 - (void)setUp
 {
@@ -46,25 +59,50 @@ MQTTClient *client;
     client.delegate = self;
     client.username = @"user";
     client.password = @"password";
-    client.host = @"localhost";
+    client.host = kHost;
+    
+    topic = [NSString stringWithFormat:@"MQTTKitTests/%@", [[NSUUID UUID] UUIDString]];
 }
 
 - (void)tearDown
 {
     [client disconnect];
+
+#ifdef M2M
+    [self deleteTopic:topic];
+#endif
+
     // Put teardown code here. This method is called after the invocation of each test method in the class.
     [super tearDown];
+}
+
+- (void)deleteTopic:(NSString *)topic
+{
+    NSMutableURLRequest *request = [[NSMutableURLRequest alloc] init];
+    request.URL = [NSURL URLWithString:[NSString stringWithFormat:@"http://eclipse.mqttbridge.com/%@",
+                                        [topic stringByReplacingOccurrencesOfString:@"/"
+                                                                         withString:@"%2F"]]];
+    request.HTTPMethod = @"DELETE";
+    
+    NSHTTPURLResponse *response;
+    NSError *error;
+    NSLog(@"DELETE %@", request.URL);
+    [NSURLConnection sendSynchronousRequest:request returningResponse:&response error:&error];
+    if (error) {
+        XCTFail(@"%@", error);
+    }
+    XCTAssertEqual((NSInteger)200, response.statusCode);
 }
 
 - (void)testConnect
 {
     [client connect];
 
-    XCTAssertTrue(gotSignal(self.connected, 2));
+    XCTAssertTrue(gotSignal(self.connected, 4));
 
     [client disconnect];
 
-    XCTAssertTrue(gotSignal(self.disconnected, 2));
+    XCTAssertTrue(gotSignal(self.disconnected, 4));
 
     [client disconnect];
 }
@@ -73,50 +111,48 @@ MQTTClient *client;
 {
     [client connect];
 
-    XCTAssertTrue(gotSignal(self.connected, 2));
+    XCTAssertTrue(gotSignal(self.connected, 4));
 
-    NSString *topic = @"test/testPublish";
     [client subscribe:topic withQos:0];
 
-    XCTAssertTrue(gotSignal(self.subscribed, 2));
+    XCTAssertTrue(gotSignal(self.subscribed, 4));
 
     NSString *text = @"Hello, MQTT";
     [client publishString:text toTopic:topic withQos:0 retain:YES];
 
-    XCTAssertTrue(gotSignal(self.published, 2));
+    XCTAssertTrue(gotSignal(self.published, 4));
 
-    XCTAssertTrue(gotSignal(self.received, 2));
+    XCTAssertTrue(gotSignal(self.received, 4));
     NSLog(@"message = %@", message.payload);
     XCTAssertTrue([text isEqualToString:message.payload]);
 
     [client disconnect];
-    XCTAssertTrue(gotSignal(self.disconnected, 2));
+    XCTAssertTrue(gotSignal(self.disconnected, 4));
 }
 
 - (void)testUnsubscribe
 {
     [client connect];
 
-    XCTAssertTrue(gotSignal(self.connected, 2));
+    XCTAssertTrue(gotSignal(self.connected, 4));
 
-    NSString *topic = @"test/testPublish";
     [client subscribe:topic withQos:0];
 
-    XCTAssertTrue(gotSignal(self.subscribed, 2));
+    XCTAssertTrue(gotSignal(self.subscribed, 4));
 
     [client unsubscribe:topic];
 
-    XCTAssertTrue(gotSignal(self.unsubscribed, 2));
+    XCTAssertTrue(gotSignal(self.unsubscribed, 4));
 
     NSString *text = @"Hello, MQTT";
-    [client publishString:text toTopic:topic withQos:0 retain:YES];
+    [client publishString:text toTopic:topic withQos:0 retain:NO];
 
-    XCTAssertTrue(gotSignal(self.published, 2));
+    XCTAssertTrue(gotSignal(self.published, 4));
 
-    XCTAssertFalse(gotSignal(self.received, 1));
+    XCTAssertFalse(gotSignal(self.received, 2));
 
     [client disconnect];
-    XCTAssertTrue(gotSignal(self.disconnected, 2));
+    XCTAssertTrue(gotSignal(self.disconnected, 4));
 }
 
 #pragma mark MQTTClientDelegate

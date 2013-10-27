@@ -10,6 +10,16 @@
 #import "MQTTKit.h"
 #import "mosquitto.h"
 
+#if 0 // set to 1 to enable logs
+
+#define LogDebug(frmt, ...) NSLog(frmt, ##__VA_ARGS__);
+
+#else
+
+#define LogDebug(frmt, ...) {}
+
+#endif
+
 @implementation MQTTMessage
 
 @synthesize mid, topic, payload, payloadlen, qos, retained;
@@ -53,7 +63,7 @@ dispatch_queue_t queue;
 static void on_connect(struct mosquitto *mosq, void *obj, int rc)
 {
     MQTTClient* client = (__bridge MQTTClient*)obj;
-    NSLog(@"on_connect rc = %d", rc);
+    LogDebug(@"on_connect rc = %d", rc);
     client.connected = YES;
     [client.delegate client:client didConnect:rc];
 }
@@ -61,7 +71,7 @@ static void on_connect(struct mosquitto *mosq, void *obj, int rc)
 static void on_disconnect(struct mosquitto *mosq, void *obj, int rc)
 {
     MQTTClient* client = (__bridge MQTTClient*)obj;
-    NSLog(@"on_disconnect rc = %d", rc);
+    LogDebug(@"on_disconnect rc = %d", rc);
     client.connected = NO;
     if ([client.delegate respondsToSelector:@selector(client:didDisconnect:)]) {
         [client.delegate client:client didDisconnect:rc];
@@ -155,11 +165,11 @@ static void on_unsubscribe(struct mosquitto *mosq, void *obj, int message_id)
     mosquitto_username_pw_set(mosq, cstrUsername, cstrPassword);
 
     mosquitto_connect(mosq, cstrHost, port, keepAlive);
-
+    
     dispatch_async(queue, ^{
-        NSLog(@"start loop");
+        LogDebug(@"start mosquitto loop");
         mosquitto_loop_forever(mosq, 10, 1);
-        NSLog(@"end loop");
+        LogDebug(@"end mosquitto loop");
     });
 
     connected = YES;
