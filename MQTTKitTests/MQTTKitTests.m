@@ -117,14 +117,14 @@ NSString *topic;
 
     XCTAssertTrue(gotSignal(self.subscribed, 4));
 
-    NSString *text = @"Hello, MQTT";
+    NSString *text = [NSString stringWithFormat:@"Hello, MQTT %d", arc4random()];
     [client publishString:text toTopic:topic withQos:0 retain:YES];
 
     XCTAssertTrue(gotSignal(self.published, 4));
 
     XCTAssertTrue(gotSignal(self.received, 4));
-    NSLog(@"message = %@", message.payload);
-    XCTAssertTrue([text isEqualToString:message.payload]);
+    NSLog(@"message = %@", message.payloadString);
+    XCTAssertTrue([text isEqualToString:message.payloadString]);
 
     [client disconnect];
     XCTAssertTrue(gotSignal(self.disconnected, 4));

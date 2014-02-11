@@ -9,14 +9,12 @@
 
 @interface MQTTMessage : NSObject
 
-@property (readwrite, assign) unsigned short mid;
-@property (readwrite, copy) NSString *topic;
-@property (readwrite, copy) NSString *payload;
-@property (readwrite, assign) unsigned short payloadlen;
-@property (readwrite, assign) unsigned short qos;
-@property (readwrite, assign) BOOL retained;
+@property (readonly, assign) unsigned short mid;
+@property (readonly, copy) NSString *topic;
+@property (readonly, copy) NSData *payload;
+@property (readonly, assign) BOOL retained;
 
--(id)init;
+- (NSString *)payloadString;
 
 @end
 
@@ -63,10 +61,12 @@
 - (void) reconnect;
 - (void) disconnect;
 
-- (void)setWill: (NSString *)payload toTopic:(NSString *)willTopic withQos:(NSUInteger)willQos retain:(BOOL)retain;
+- (void)setWillData:(NSData *)payload toTopic:(NSString *)willTopic withQos:(NSUInteger)willQos retain:(BOOL)retain;
+- (void)setWill:(NSString *)payload toTopic:(NSString *)willTopic withQos:(NSUInteger)willQos retain:(BOOL)retain;
 - (void)clearWill;
 
-- (void)publishString: (NSString *)payload toTopic:(NSString *)topic withQos:(NSUInteger)qos retain:(BOOL)retain;
+- (void)publishData:(NSData *)payload toTopic:(NSString *)topic withQos:(NSUInteger)qos retain:(BOOL)retain;
+- (void)publishString:(NSString *)payload toTopic:(NSString *)topic withQos:(NSUInteger)qos retain:(BOOL)retain;
 
 - (void)subscribe: (NSString *)topic;
 - (void)subscribe: (NSString *)topic withQos:(NSUInteger)qos;

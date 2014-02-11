@@ -20,21 +20,36 @@
 
 #endif
 
+@interface MQTTMessage()
+
+@property (readwrite, assign) unsigned short mid;
+@property (readwrite, copy) NSString *topic;
+@property (readwrite, copy) NSData *payload;
+@property (readwrite, assign) unsigned short qos;
+@property (readwrite, assign) BOOL retained;
+
+@end
+
 @implementation MQTTMessage
 
-@synthesize mid, topic, payload, payloadlen, qos, retained;
-
--(id)init
+-(id)initWithTopic:(NSString *)topic
+           payload:(NSData *)payload
+               qos:(short)qos
+            retain:(BOOL)retained
+               mid:(short)mid
 {
     if ((self = [super init])) {
-            self.mid = 0;
-    self.topic = nil;
-    self.payload = nil;
-    self.payloadlen = 0;
-    self.qos = 0;
-    self.retained = FALSE;
+        self.topic = topic;
+        self.payload = payload;
+        self.qos = qos;
+        self.retained = retained;
+        self.mid = mid;
     }
     return self;
+}
+
+- (NSString *)payloadString {
+    return [[NSString alloc] initWithBytes:self.payload.bytes length:self.payload.length encoding:NSUTF8StringEncoding];
 }
 
 @end
@@ -88,11 +103,13 @@ static void on_publish(struct mosquitto *mosq, void *obj, int message_id)
 
 static void on_message(struct mosquitto *mosq, void *obj, const struct mosquitto_message *mosq_msg)
 {
-    MQTTMessage *message = [[MQTTMessage alloc] init];
-    message.topic = [NSString stringWithUTF8String: mosq_msg->topic];
-    message.payload = [[NSString alloc] initWithBytes:mosq_msg->payload
-                                                 length:mosq_msg->payloadlen
-                                               encoding:NSUTF8StringEncoding];
+    NSString *topic = [NSString stringWithUTF8String: mosq_msg->topic];
+    NSData *payload = [NSData dataWithBytes:mosq_msg->payload length:mosq_msg->payloadlen];
+    MQTTMessage *message = [[MQTTMessage alloc] initWithTopic:topic
+                                                      payload:payload
+                                                          qos:mosq_msg->qos
+                                                       retain:mosq_msg->retain
+                                                          mid:mosq_msg->mid];
     MQTTClient* client = (__bridge MQTTClient*)obj;
     if ([client.delegate respondsToSelector:@selector(client:didReceiveMessage:)]) {
         [client.delegate client:client didReceiveMessage:message];
@@ -188,30 +205,35 @@ static void on_unsubscribe(struct mosquitto *mosq, void *obj, int message_id)
     mosquitto_disconnect(mosq);
 }
 
-- (void)setWill: (NSString *)payload toTopic:(NSString *)willTopic withQos:(NSUInteger)willQos retain:(BOOL)retain;
+- (void)setWillData:(NSData *)payload toTopic:(NSString *)willTopic withQos:(NSUInteger)willQos retain:(BOOL)retain
 {
     const char* cstrTopic = [willTopic cStringUsingEncoding:NSUTF8StringEncoding];
-    const uint8_t* cstrPayload = (const uint8_t*)[payload cStringUsingEncoding:NSUTF8StringEncoding];
-    size_t cstrlen = [payload lengthOfBytesUsingEncoding:NSUTF8StringEncoding];
-    mosquitto_will_set(mosq, cstrTopic, cstrlen, cstrPayload, willQos, retain);
+    mosquitto_will_set(mosq, cstrTopic, payload.length, payload.bytes, willQos, retain);
 }
 
+- (void)setWill:(NSString *)payload toTopic:(NSString *)willTopic withQos:(NSUInteger)willQos retain:(BOOL)retain;
+{
+    [self setWillData:[payload dataUsingEncoding:NSUTF8StringEncoding]
+              toTopic:willTopic
+              withQos:willQos
+               retain:retain];
+}
 
 - (void)clearWill
 {
     mosquitto_will_clear(mosq);
 }
 
-
-- (void)publishString: (NSString *)payload toTopic:(NSString *)topic withQos:(NSUInteger)qos retain:(BOOL)retain {
+- (void)publishData:(NSData *)payload toTopic:(NSString *)topic withQos:(NSUInteger)qos retain:(BOOL)retain {
     const char* cstrTopic = [topic cStringUsingEncoding:NSUTF8StringEncoding];
-    const uint8_t* cstrPayload = (const uint8_t*)[payload cStringUsingEncoding:NSUTF8StringEncoding];
-    size_t cstrlen = [payload lengthOfBytesUsingEncoding:NSUTF8StringEncoding];
-    mosquitto_publish(mosq, NULL, cstrTopic, cstrlen, cstrPayload, qos, retain);
-
+    mosquitto_publish(mosq, NULL, cstrTopic, payload.length, payload.bytes, qos, retain);
 }
-
-
+- (void)publishString: (NSString *)payload toTopic:(NSString *)topic withQos:(NSUInteger)qos retain:(BOOL)retain {
+    [self publishData:[payload dataUsingEncoding:NSUTF8StringEncoding]
+              toTopic:topic
+              withQos:qos
+               retain:retain];
+}
 
 - (void)subscribe: (NSString *)topic {
     [self subscribe:topic withQos:0];
