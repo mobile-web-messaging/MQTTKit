@@ -57,20 +57,16 @@
 @interface MQTTClient()
 
 @property (nonatomic, assign) BOOL connected;
+@property (nonatomic, copy) void (^connectionCompletionHandler)(NSUInteger code);
+@property (nonatomic, copy) void (^disconnectionCompletionHandler)(NSUInteger code);
+@property (nonatomic, strong) NSMutableDictionary *subscriptionHandlers;
+@property (nonatomic, strong) NSMutableDictionary *unsubscriptionHandlers;
+// dictionary of mid -> completion handlers for messages published with a QoS of 1 or 2
+@property (nonatomic, strong) NSMutableDictionary *publishHandlers;
 
 @end
 
 @implementation MQTTClient
-
-@synthesize clientID;
-@synthesize host;
-@synthesize port;
-@synthesize username;
-@synthesize password;
-@synthesize keepAlive;
-@synthesize cleanSession;
-@synthesize delegate;
-@synthesize connected;
 
 // dispatch queue to run the mosquitto_loop_forever.
 dispatch_queue_t queue;
@@ -80,7 +76,9 @@ static void on_connect(struct mosquitto *mosq, void *obj, int rc)
     MQTTClient* client = (__bridge MQTTClient*)obj;
     LogDebug(@"on_connect rc = %d", rc);
     client.connected = YES;
-    [client.delegate client:client didConnect:rc];
+    if (client.connectionCompletionHandler) {
+        client.connectionCompletionHandler(rc);
+    }
 }
 
 static void on_disconnect(struct mosquitto *mosq, void *obj, int rc)
@@ -88,16 +86,24 @@ static void on_disconnect(struct mosquitto *mosq, void *obj, int rc)
     MQTTClient* client = (__bridge MQTTClient*)obj;
     LogDebug(@"on_disconnect rc = %d", rc);
     client.connected = NO;
-    if ([client.delegate respondsToSelector:@selector(client:didDisconnect:)]) {
-        [client.delegate client:client didDisconnect:rc];
+    if (client.disconnectionCompletionHandler) {
+        client.disconnectionCompletionHandler(rc);
     }
+    [client.publishHandlers removeAllObjects];
+    [client.subscriptionHandlers removeAllObjects];
+    [client.unsubscriptionHandlers removeAllObjects];
 }
 
 static void on_publish(struct mosquitto *mosq, void *obj, int message_id)
 {
     MQTTClient* client = (__bridge MQTTClient*)obj;
-    if ([client.delegate respondsToSelector:@selector(client:didPublish:)]) {
-        [client.delegate client:client didPublish:message_id];
+    NSNumber *mid = [NSNumber numberWithInt:message_id];
+    void (^handler)(int) = [client.publishHandlers objectForKey:mid];
+    if (handler) {
+        handler(message_id);
+        if (message_id > 0) {
+            [client.publishHandlers removeObjectForKey:mid];
+        }
     }
 }
 
@@ -110,25 +116,36 @@ static void on_message(struct mosquitto *mosq, void *obj, const struct mosquitto
                                                           qos:mosq_msg->qos
                                                        retain:mosq_msg->retain
                                                           mid:mosq_msg->mid];
+    NSLog(@"on message %@", message);
     MQTTClient* client = (__bridge MQTTClient*)obj;
-    if ([client.delegate respondsToSelector:@selector(client:didReceiveMessage:)]) {
-        [client.delegate client:client didReceiveMessage:message];
+    if (client.messageHandler) {
+        client.messageHandler(message);
     }
 }
 
 static void on_subscribe(struct mosquitto *mosq, void *obj, int message_id, int qos_count, const int *granted_qos)
 {
     MQTTClient* client = (__bridge MQTTClient*)obj;
-    if ([client.delegate respondsToSelector:@selector(client:didSubscribe:grantedQos:)]) {
-        [client.delegate client:client didSubscribe:message_id grantedQos:nil];
+    NSNumber *mid = [NSNumber numberWithInt:message_id];
+    MQTTSubscriptionCompletionHandler handler = [client.subscriptionHandlers objectForKey:mid];
+    if (handler) {
+        NSMutableArray *grantedQos = [NSMutableArray arrayWithCapacity:qos_count];
+        for (int i = 0; i < qos_count; i++) {
+            [grantedQos addObject:[NSNumber numberWithInt:granted_qos[i]]];
+        }
+        handler(grantedQos);
+        [client.subscriptionHandlers removeObjectForKey:mid];
     }
 }
 
 static void on_unsubscribe(struct mosquitto *mosq, void *obj, int message_id)
 {
     MQTTClient* client = (__bridge MQTTClient*)obj;
-    if ([client.delegate respondsToSelector:@selector(client:didUnsubscribe:)]) {
-        [client.delegate client:client didUnsubscribe:message_id];
+    NSNumber *mid = [NSNumber numberWithInt:message_id];
+    void (^completionHandler)(void) = [client.unsubscriptionHandlers objectForKey:mid];
+    if (completionHandler) {
+        completionHandler();
+        [client.subscriptionHandlers removeObjectForKey:mid];
     }
 }
 
@@ -152,9 +169,13 @@ static void on_unsubscribe(struct mosquitto *mosq, void *obj, int message_id)
         [self setKeepAlive: 60];
         [self setCleanSession: YES]; //NOTE: this isdisable clean to keep the broker remember this client
 
+        self.subscriptionHandlers = [[NSMutableDictionary alloc] init];
+        self.unsubscriptionHandlers = [[NSMutableDictionary alloc] init];
+        self.publishHandlers = [[NSMutableDictionary alloc] init];
+
         const char* cstrClientId = [self.clientID cStringUsingEncoding:NSUTF8StringEncoding];
 
-        mosq = mosquitto_new(cstrClientId, cleanSession, (__bridge void *)(self));
+        mosq = mosquitto_new(cstrClientId, self.cleanSession, (__bridge void *)(self));
         mosquitto_connect_callback_set(mosq, on_connect);
         mosquitto_disconnect_callback_set(mosq, on_disconnect);
         mosquitto_publish_callback_set(mosq, on_publish);
@@ -168,20 +189,22 @@ static void on_unsubscribe(struct mosquitto *mosq, void *obj, int message_id)
 }
 
 
-- (void) connect {
-    const char *cstrHost = [host cStringUsingEncoding:NSASCIIStringEncoding];
+- (void) connectWithCompletionHandler:(void (^)(NSUInteger code))completionHandler {
+    self.connectionCompletionHandler = completionHandler;
+
+    const char *cstrHost = [self.host cStringUsingEncoding:NSASCIIStringEncoding];
     const char *cstrUsername = NULL, *cstrPassword = NULL;
 
-    if (username)
-        cstrUsername = [username cStringUsingEncoding:NSUTF8StringEncoding];
+    if (self.username)
+        cstrUsername = [self.username cStringUsingEncoding:NSUTF8StringEncoding];
 
-    if (password)
-        cstrPassword = [password cStringUsingEncoding:NSUTF8StringEncoding];
+    if (self.password)
+        cstrPassword = [self.password cStringUsingEncoding:NSUTF8StringEncoding];
 
     // FIXME: check for errors
     mosquitto_username_pw_set(mosq, cstrUsername, cstrPassword);
 
-    mosquitto_connect(mosq, cstrHost, port, keepAlive);
+    mosquitto_connect(mosq, cstrHost, self.port, self.keepAlive);
     
     dispatch_async(queue, ^{
         LogDebug(@"start mosquitto loop");
@@ -189,19 +212,21 @@ static void on_unsubscribe(struct mosquitto *mosq, void *obj, int message_id)
         LogDebug(@"end mosquitto loop");
     });
 
-    connected = YES;
+    self.connected = YES;
 }
 
-- (void) connectToHost: (NSString*)aHost {
-    [self setHost:aHost];
-    [self connect];
+- (void)connectToHost:(NSString *)host
+    completionHandler:(void (^)(NSUInteger))completionHandler {
+    self.host = host;
+    [self connectWithCompletionHandler:completionHandler];
 }
 
 - (void) reconnect {
     mosquitto_reconnect(mosq);
 }
 
-- (void) disconnect {
+- (void) disconnectWithCompletionHandler:(void (^)(NSUInteger code))completionHandler {
+    self.disconnectionCompletionHandler = completionHandler;
     mosquitto_disconnect(mosq);
 }
 
@@ -224,31 +249,53 @@ static void on_unsubscribe(struct mosquitto *mosq, void *obj, int message_id)
     mosquitto_will_clear(mosq);
 }
 
-- (void)publishData:(NSData *)payload toTopic:(NSString *)topic withQos:(NSUInteger)qos retain:(BOOL)retain {
+- (void)publishData:(NSData *)payload toTopic:(NSString *)topic withQos:(NSUInteger)qos retain:(BOOL)retain completionHandler:(void (^)(int mid))completionHandler {
     const char* cstrTopic = [topic cStringUsingEncoding:NSUTF8StringEncoding];
-    mosquitto_publish(mosq, NULL, cstrTopic, payload.length, payload.bytes, qos, retain);
+    if (qos == 0 && completionHandler) {
+        [self.publishHandlers setObject:completionHandler forKey:[NSNumber numberWithInt:0]];
+    }
+    int mid;
+    mosquitto_publish(mosq, &mid, cstrTopic, payload.length, payload.bytes, qos, retain);
+    if (completionHandler) {
+        if (qos == 0) {
+            completionHandler(mid);
+        } else {
+            [self.publishHandlers setObject:completionHandler forKey:[NSNumber numberWithInt:mid]];
+        }
+    }
 }
-- (void)publishString: (NSString *)payload toTopic:(NSString *)topic withQos:(NSUInteger)qos retain:(BOOL)retain {
+
+- (void)publishString: (NSString *)payload toTopic:(NSString *)topic withQos:(NSUInteger)qos retain:(BOOL)retain completionHandler:(void (^)(int mid))completionHandler; {
     [self publishData:[payload dataUsingEncoding:NSUTF8StringEncoding]
               toTopic:topic
               withQos:qos
-               retain:retain];
+               retain:retain
+    completionHandler:completionHandler];
 }
 
-- (void)subscribe: (NSString *)topic {
-    [self subscribe:topic withQos:0];
+- (void)subscribe: (NSString *)topic withCompletionHandler:(MQTTSubscriptionCompletionHandler)completionHandler {
+    [self subscribe:topic withQos:0 completionHandler:completionHandler];
 }
 
-- (void)subscribe: (NSString *)topic withQos:(NSUInteger)qos {
+- (void)subscribe: (NSString *)topic withQos:(NSUInteger)qos completionHandler:(MQTTSubscriptionCompletionHandler)completionHandler
+{
     const char* cstrTopic = [topic cStringUsingEncoding:NSUTF8StringEncoding];
-    mosquitto_subscribe(mosq, NULL, cstrTopic, qos);
+    int mid;
+    mosquitto_subscribe(mosq, &mid, cstrTopic, qos);
+    if (completionHandler) {
+        [self.subscriptionHandlers setObject:[completionHandler copy] forKey:[NSNumber numberWithInteger:mid]];
+    }
 }
 
-- (void)unsubscribe: (NSString *)topic {
+- (void)unsubscribe: (NSString *)topic withCompletionHandler:(void (^)(void))completionHandler
+{
     const char* cstrTopic = [topic cStringUsingEncoding:NSUTF8StringEncoding];
-    mosquitto_unsubscribe(mosq, NULL, cstrTopic);
+    int mid;
+    mosquitto_unsubscribe(mosq, &mid, cstrTopic);
+    if (completionHandler) {
+        [self.unsubscriptionHandlers setObject:[completionHandler copy] forKey:[NSNumber numberWithInteger:mid]];
+    }
 }
-
 
 - (void) setMessageRetry: (NSUInteger)seconds
 {
