@@ -167,6 +167,7 @@ NSString *topic;
 
     __block int receivedCount = 0;
     [client setMessageHandler:^(MQTTMessage *message) {
+        NSLog(@"received message");
         XCTAssertTrue([text isEqualToString:message.payloadString]);
         receivedCount++;
         if (receivedCount == count) {
@@ -174,7 +175,7 @@ NSString *topic;
         }
     }];
     
-    XCTAssertTrue(gotSignal(received, 4));
+    XCTAssertTrue(gotSignal(received, 6));
     
     [client disconnectWithCompletionHandler:nil];
 }
