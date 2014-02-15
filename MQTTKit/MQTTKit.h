@@ -7,6 +7,12 @@
 //  Copyright 2012 Nicholas Humfrey. All rights reserved.
 //
 
+typedef enum MQTTQualityOfService : NSUInteger {
+    AtMostOnce,
+    AtLeastOnce,
+    ExactlyOnce
+} MQTTQualityOfService;
+
 @interface MQTTMessage : NSObject
 
 @property (readonly, assign) unsigned short mid;
@@ -44,18 +50,38 @@ typedef void (^MQTTMessageHandler)(MQTTMessage *message);
 - (void) connectWithCompletionHandler:(void (^)(NSUInteger code))completionHandler;
 - (void) connectToHost: (NSString*)host
      completionHandler:(void (^)(NSUInteger code))completionHandler;
-- (void) reconnect;
 - (void) disconnectWithCompletionHandler:(void (^)(NSUInteger code))completionHandler;
+- (void) reconnect;
 
-- (void)setWillData:(NSData *)payload toTopic:(NSString *)willTopic withQos:(NSUInteger)willQos retain:(BOOL)retain;
-- (void)setWill:(NSString *)payload toTopic:(NSString *)willTopic withQos:(NSUInteger)willQos retain:(BOOL)retain;
+- (void)setWillData:(NSData *)payload
+            toTopic:(NSString *)willTopic
+            withQos:(MQTTQualityOfService)willQos
+             retain:(BOOL)retain;
+- (void)setWill:(NSString *)payload
+        toTopic:(NSString *)willTopic
+        withQos:(MQTTQualityOfService)willQos
+         retain:(BOOL)retain;
 - (void)clearWill;
 
-- (void)publishData:(NSData *)payload toTopic:(NSString *)topic withQos:(NSUInteger)qos retain:(BOOL)retain completionHandler:(void (^)(int mid))completionHandler;
-- (void)publishString:(NSString *)payload toTopic:(NSString *)topic withQos:(NSUInteger)qos retain:(BOOL)retain completionHandler:(void (^)(int mid))completionHandler;
+- (void)publishData:(NSData *)payload
+            toTopic:(NSString *)topic
+            withQos:(MQTTQualityOfService)qos
+             retain:(BOOL)retain
+  completionHandler:(void (^)(int mid))completionHandler;
+- (void)publishString:(NSString *)payload
+              toTopic:(NSString *)topic
+              withQos:(MQTTQualityOfService)qos
+               retain:(BOOL)retain
+    completionHandler:(void (^)(int mid))completionHandler;
 
-- (void)subscribe: (NSString *)topic withCompletionHandler:(MQTTSubscriptionCompletionHandler)completionHandler;
-- (void)subscribe: (NSString *)topic withQos:(NSUInteger)qos completionHandler:(MQTTSubscriptionCompletionHandler)completionHandler;
-- (void)unsubscribe: (NSString *)topic withCompletionHandler:(void (^)(void))completionHandler;
+- (void)subscribe:(NSString *)topic
+withCompletionHandler:(MQTTSubscriptionCompletionHandler)completionHandler;
+
+- (void)subscribe:(NSString *)topic
+          withQos:(MQTTQualityOfService)qos
+completionHandler:(MQTTSubscriptionCompletionHandler)completionHandler;
+
+- (void)unsubscribe: (NSString *)topic
+withCompletionHandler:(void (^)(void))completionHandler;
 
 @end

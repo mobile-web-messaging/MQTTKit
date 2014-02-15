@@ -25,7 +25,7 @@
 @property (readwrite, assign) unsigned short mid;
 @property (readwrite, copy) NSString *topic;
 @property (readwrite, copy) NSData *payload;
-@property (readwrite, assign) unsigned short qos;
+@property (readwrite, assign) MQTTQualityOfService qos;
 @property (readwrite, assign) BOOL retained;
 
 @end
@@ -34,7 +34,7 @@
 
 -(id)initWithTopic:(NSString *)topic
            payload:(NSData *)payload
-               qos:(short)qos
+               qos:(MQTTQualityOfService)qos
             retain:(BOOL)retained
                mid:(short)mid
 {
@@ -116,7 +116,7 @@ static void on_message(struct mosquitto *mosq, void *obj, const struct mosquitto
                                                           qos:mosq_msg->qos
                                                        retain:mosq_msg->retain
                                                           mid:mosq_msg->mid];
-    NSLog(@"on message %@", message);
+    LogDebug(@"on message %@", message);
     MQTTClient* client = (__bridge MQTTClient*)obj;
     if (client.messageHandler) {
         client.messageHandler(message);
@@ -230,13 +230,19 @@ static void on_unsubscribe(struct mosquitto *mosq, void *obj, int message_id)
     mosquitto_disconnect(mosq);
 }
 
-- (void)setWillData:(NSData *)payload toTopic:(NSString *)willTopic withQos:(NSUInteger)willQos retain:(BOOL)retain
+- (void)setWillData:(NSData *)payload
+            toTopic:(NSString *)willTopic
+            withQos:(MQTTQualityOfService)willQos
+             retain:(BOOL)retain
 {
     const char* cstrTopic = [willTopic cStringUsingEncoding:NSUTF8StringEncoding];
     mosquitto_will_set(mosq, cstrTopic, payload.length, payload.bytes, willQos, retain);
 }
 
-- (void)setWill:(NSString *)payload toTopic:(NSString *)willTopic withQos:(NSUInteger)willQos retain:(BOOL)retain;
+- (void)setWill:(NSString *)payload
+        toTopic:(NSString *)willTopic
+        withQos:(MQTTQualityOfService)willQos
+         retain:(BOOL)retain;
 {
     [self setWillData:[payload dataUsingEncoding:NSUTF8StringEncoding]
               toTopic:willTopic
@@ -249,7 +255,11 @@ static void on_unsubscribe(struct mosquitto *mosq, void *obj, int message_id)
     mosquitto_will_clear(mosq);
 }
 
-- (void)publishData:(NSData *)payload toTopic:(NSString *)topic withQos:(NSUInteger)qos retain:(BOOL)retain completionHandler:(void (^)(int mid))completionHandler {
+- (void)publishData:(NSData *)payload
+            toTopic:(NSString *)topic
+            withQos:(MQTTQualityOfService)qos
+             retain:(BOOL)retain
+  completionHandler:(void (^)(int mid))completionHandler {
     const char* cstrTopic = [topic cStringUsingEncoding:NSUTF8StringEncoding];
     if (qos == 0 && completionHandler) {
         [self.publishHandlers setObject:completionHandler forKey:[NSNumber numberWithInt:0]];
@@ -265,7 +275,11 @@ static void on_unsubscribe(struct mosquitto *mosq, void *obj, int message_id)
     }
 }
 
-- (void)publishString: (NSString *)payload toTopic:(NSString *)topic withQos:(NSUInteger)qos retain:(BOOL)retain completionHandler:(void (^)(int mid))completionHandler; {
+- (void)publishString:(NSString *)payload
+              toTopic:(NSString *)topic
+              withQos:(MQTTQualityOfService)qos
+               retain:(BOOL)retain
+    completionHandler:(void (^)(int mid))completionHandler; {
     [self publishData:[payload dataUsingEncoding:NSUTF8StringEncoding]
               toTopic:topic
               withQos:qos
@@ -277,7 +291,7 @@ static void on_unsubscribe(struct mosquitto *mosq, void *obj, int message_id)
     [self subscribe:topic withQos:0 completionHandler:completionHandler];
 }
 
-- (void)subscribe: (NSString *)topic withQos:(NSUInteger)qos completionHandler:(MQTTSubscriptionCompletionHandler)completionHandler
+- (void)subscribe: (NSString *)topic withQos:(MQTTQualityOfService)qos completionHandler:(MQTTSubscriptionCompletionHandler)completionHandler
 {
     const char* cstrTopic = [topic cStringUsingEncoding:NSUTF8StringEncoding];
     int mid;

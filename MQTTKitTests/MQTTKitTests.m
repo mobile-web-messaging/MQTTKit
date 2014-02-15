@@ -100,7 +100,7 @@ NSString *topic;
 
     [client connectWithCompletionHandler:^(NSUInteger code) {
         [client subscribe:topic
-                  withQos:0
+                  withQos:AtMostOnce
         completionHandler:^(NSArray *grantedQos) {
             for (NSNumber *qos in grantedQos) {
                 NSLog(@"%@", qos);
@@ -122,8 +122,11 @@ NSString *topic;
 
     dispatch_semaphore_t published = dispatch_semaphore_create(0);
 
-    [client publishString:text toTopic:topic withQos:0 retain:YES completionHandler:^(int mid) {
-        dispatch_semaphore_signal(published);
+    [client publishString:text toTopic:topic
+                  withQos:AtMostOnce
+                   retain:YES
+        completionHandler:^(int mid) {
+            dispatch_semaphore_signal(published);
     }];
 
     XCTAssertTrue(gotSignal(published, 4));
@@ -139,7 +142,7 @@ NSString *topic;
     
     [client connectWithCompletionHandler:^(NSUInteger code) {
         [client subscribe:topic
-                  withQos:0
+                  withQos:AtMostOnce
         completionHandler:^(NSArray *grantedQos) {
             dispatch_semaphore_signal(subscribed);
         }];
@@ -151,8 +154,12 @@ NSString *topic;
     
     int count = 10;
     for (int i = 0; i < count; i++) {
-        [client publishString:text toTopic:topic withQos:2 retain:YES completionHandler:^(int mid) {
-            NSLog(@"published message %i", mid);
+        [client publishString:text
+                      toTopic:topic
+                      withQos:AtMostOnce
+                       retain:NO
+            completionHandler:^(int mid) {
+                NSLog(@"published message %i", mid);
         }];
     }
     
@@ -178,8 +185,8 @@ NSString *topic;
 
     [client connectWithCompletionHandler:^(NSUInteger code) {
         [client subscribe:topic
-                  withQos:0
-         completionHandler:^(NSArray *grantedQos) {
+                  withQos:AtMostOnce
+        completionHandler:^(NSArray *grantedQos) {
              dispatch_semaphore_signal(subscribed);
          }];
     }];
@@ -205,7 +212,11 @@ NSString *topic;
 
     dispatch_semaphore_t published = dispatch_semaphore_create(0);
 
-    [client publishString:text toTopic:topic withQos:0 retain:NO completionHandler:^(int mid) {
+    [client publishString:text
+                  toTopic:topic
+                  withQos:AtMostOnce
+                   retain:NO
+        completionHandler:^(int mid) {
         dispatch_semaphore_signal(published);
     }];
 
