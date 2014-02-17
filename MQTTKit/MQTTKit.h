@@ -22,6 +22,8 @@ typedef enum MQTTQualityOfService : NSUInteger {
     ExactlyOnce
 } MQTTQualityOfService;
 
+#pragma mark - MQTT Message
+
 @interface MQTTMessage : NSObject
 
 @property (readonly, assign) unsigned short mid;
@@ -35,6 +37,8 @@ typedef enum MQTTQualityOfService : NSUInteger {
 
 typedef void (^MQTTSubscriptionCompletionHandler)(NSArray *grantedQos);
 typedef void (^MQTTMessageHandler)(MQTTMessage *message);
+
+#pragma mark - MQTT Client
 
 @class MQTTClient;
 
@@ -56,12 +60,14 @@ typedef void (^MQTTMessageHandler)(MQTTMessage *message);
 
 - (MQTTClient*) initWithClientId: (NSString *)clientId;
 - (void) setMessageRetry: (NSUInteger)seconds;
+
+#pragma mark - Connection
+
 - (void) connectWithCompletionHandler:(void (^)(MQTTConnectionReturnCode code))completionHandler;
 - (void) connectToHost: (NSString*)host
      completionHandler:(void (^)(MQTTConnectionReturnCode code))completionHandler;
 - (void) disconnectWithCompletionHandler:(void (^)(NSUInteger code))completionHandler;
 - (void) reconnect;
-
 - (void)setWillData:(NSData *)payload
             toTopic:(NSString *)willTopic
             withQos:(MQTTQualityOfService)willQos
@@ -71,6 +77,8 @@ typedef void (^MQTTMessageHandler)(MQTTMessage *message);
         withQos:(MQTTQualityOfService)willQos
          retain:(BOOL)retain;
 - (void)clearWill;
+
+#pragma mark - Publish
 
 - (void)publishData:(NSData *)payload
             toTopic:(NSString *)topic
@@ -83,13 +91,13 @@ typedef void (^MQTTMessageHandler)(MQTTMessage *message);
                retain:(BOOL)retain
     completionHandler:(void (^)(int mid))completionHandler;
 
+#pragma mark - Subscribe
+
 - (void)subscribe:(NSString *)topic
 withCompletionHandler:(MQTTSubscriptionCompletionHandler)completionHandler;
-
 - (void)subscribe:(NSString *)topic
           withQos:(MQTTQualityOfService)qos
 completionHandler:(MQTTSubscriptionCompletionHandler)completionHandler;
-
 - (void)unsubscribe: (NSString *)topic
 withCompletionHandler:(void (^)(void))completionHandler;
 

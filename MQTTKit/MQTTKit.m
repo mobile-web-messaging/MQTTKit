@@ -20,6 +20,8 @@
 
 #endif
 
+#pragma mark - MQTT Message
+
 @interface MQTTMessage()
 
 @property (readwrite, assign) unsigned short mid;
@@ -54,6 +56,8 @@
 
 @end
 
+#pragma mark - MQTT Client
+
 @interface MQTTClient()
 
 @property (nonatomic, assign) BOOL connected;
@@ -70,6 +74,8 @@
 
 // dispatch queue to run the mosquitto_loop_forever.
 dispatch_queue_t queue;
+
+#pragma mark - mosquitto callback methods
 
 static void on_connect(struct mosquitto *mosq, void *obj, int rc)
 {
@@ -188,6 +194,19 @@ static void on_unsubscribe(struct mosquitto *mosq, void *obj, int message_id)
     return self;
 }
 
+- (void) setMessageRetry: (NSUInteger)seconds
+{
+    mosquitto_message_retry_set(mosq, (unsigned int)seconds);
+}
+
+- (void) dealloc {
+    if (mosq) {
+        mosquitto_destroy(mosq);
+        mosq = NULL;
+    }
+}
+
+#pragma mark - Connection
 
 - (void) connectWithCompletionHandler:(void (^)(MQTTConnectionReturnCode code))completionHandler {
     self.connectionCompletionHandler = completionHandler;
@@ -255,6 +274,8 @@ static void on_unsubscribe(struct mosquitto *mosq, void *obj, int message_id)
     mosquitto_will_clear(mosq);
 }
 
+#pragma mark - Publish
+
 - (void)publishData:(NSData *)payload
             toTopic:(NSString *)topic
             withQos:(MQTTQualityOfService)qos
@@ -287,6 +308,8 @@ static void on_unsubscribe(struct mosquitto *mosq, void *obj, int message_id)
     completionHandler:completionHandler];
 }
 
+#pragma mark - Subscribe
+
 - (void)subscribe: (NSString *)topic withCompletionHandler:(MQTTSubscriptionCompletionHandler)completionHandler {
     [self subscribe:topic withQos:0 completionHandler:completionHandler];
 }
@@ -308,18 +331,6 @@ static void on_unsubscribe(struct mosquitto *mosq, void *obj, int message_id)
     mosquitto_unsubscribe(mosq, &mid, cstrTopic);
     if (completionHandler) {
         [self.unsubscriptionHandlers setObject:[completionHandler copy] forKey:[NSNumber numberWithInteger:mid]];
-    }
-}
-
-- (void) setMessageRetry: (NSUInteger)seconds
-{
-    mosquitto_message_retry_set(mosq, (unsigned int)seconds);
-}
-
-- (void) dealloc {
-    if (mosq) {
-        mosquitto_destroy(mosq);
-        mosq = NULL;
     }
 }
 
