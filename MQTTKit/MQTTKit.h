@@ -7,6 +7,15 @@
 //  Copyright 2012 Nicholas Humfrey. All rights reserved.
 //
 
+typedef enum MQTTConnectionReturnCode : NSUInteger {
+    ConnectionAccepted,
+    ConnectionRefusedUnacceptableProtocolVersion,
+    ConnectionRefusedIdentiferRejected,
+    ConnectionRefusedServerUnavailable,
+    ConnectionRefusedBadUserNameOrPassword,
+    ConnectionRefusedNotAuthorized
+} MQTTConnectionReturnCode;
+
 typedef enum MQTTQualityOfService : NSUInteger {
     AtMostOnce,
     AtLeastOnce,
@@ -47,7 +56,7 @@ typedef void (^MQTTMessageHandler)(MQTTMessage *message);
 
 - (MQTTClient*) initWithClientId: (NSString *)clientId;
 - (void) setMessageRetry: (NSUInteger)seconds;
-- (void) connectWithCompletionHandler:(void (^)(NSUInteger code))completionHandler;
+- (void) connectWithCompletionHandler:(void (^)(MQTTConnectionReturnCode code))completionHandler;
 - (void) connectToHost: (NSString*)host
      completionHandler:(void (^)(NSUInteger code))completionHandler;
 - (void) disconnectWithCompletionHandler:(void (^)(NSUInteger code))completionHandler;

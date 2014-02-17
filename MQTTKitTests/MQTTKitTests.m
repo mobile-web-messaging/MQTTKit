@@ -75,12 +75,29 @@ NSString *topic;
     XCTAssertEqual((NSInteger)200, response.statusCode);
 }
 
+- (void)testConnectOnUnknownServer
+{
+    dispatch_semaphore_t connectError = dispatch_semaphore_create(0);
+
+    client.host = @"this.is.not.a.mqtt.server";
+
+    [client connectWithCompletionHandler:^(MQTTConnectionReturnCode code) {
+        if (code == ConnectionRefusedServerUnavailable) {
+            dispatch_semaphore_signal(connectError);
+        }
+    }];
+
+    XCTAssertFalse(gotSignal(connectError, 4));
+}
+
 - (void)testConnectDisconnect
 {
     dispatch_semaphore_t connected = dispatch_semaphore_create(0);
     
-    [client connectWithCompletionHandler:^(NSUInteger code) {
-        dispatch_semaphore_signal(connected);
+    [client connectWithCompletionHandler:^(MQTTConnectionReturnCode code) {
+        if (code == ConnectionAccepted) {
+            dispatch_semaphore_signal(connected);
+        }
     }];
 
     XCTAssertTrue(gotSignal(connected, 4));
