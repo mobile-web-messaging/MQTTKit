@@ -58,7 +58,7 @@ typedef void (^MQTTMessageHandler)(MQTTMessage *message);
 - (void) setMessageRetry: (NSUInteger)seconds;
 - (void) connectWithCompletionHandler:(void (^)(MQTTConnectionReturnCode code))completionHandler;
 - (void) connectToHost: (NSString*)host
-     completionHandler:(void (^)(NSUInteger code))completionHandler;
+     completionHandler:(void (^)(MQTTConnectionReturnCode code))completionHandler;
 - (void) disconnectWithCompletionHandler:(void (^)(NSUInteger code))completionHandler;
 - (void) reconnect;
 

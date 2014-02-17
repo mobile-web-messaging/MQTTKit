@@ -189,7 +189,7 @@ static void on_unsubscribe(struct mosquitto *mosq, void *obj, int message_id)
 }
 
 
-- (void) connectWithCompletionHandler:(void (^)(NSUInteger code))completionHandler {
+- (void) connectWithCompletionHandler:(void (^)(MQTTConnectionReturnCode code))completionHandler {
     self.connectionCompletionHandler = completionHandler;
 
     const char *cstrHost = [self.host cStringUsingEncoding:NSASCIIStringEncoding];
@@ -216,7 +216,7 @@ static void on_unsubscribe(struct mosquitto *mosq, void *obj, int message_id)
 }
 
 - (void)connectToHost:(NSString *)host
-    completionHandler:(void (^)(NSUInteger))completionHandler {
+    completionHandler:(void (^)(MQTTConnectionReturnCode code))completionHandler {
     self.host = host;
     [self connectWithCompletionHandler:completionHandler];
 }
