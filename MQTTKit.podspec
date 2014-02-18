@@ -1,7 +1,7 @@
 Pod::Spec.new do |s|
 
   s.name         = "MQTTKit"
-  s.version      = "0.1.0"
+  s.version      = "0.1.0-next"
   s.summary      = "Objective-C client for MQTT 3.1"
   s.homepage     = "http://github.com/jmesnil/MQTTKit"
   s.license      = { :type => 'Apache License, Version 2.0', :file => 'LICENSE' }
