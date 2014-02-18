@@ -186,7 +186,7 @@ uint16_t _mosquitto_mid_generate(struct mosquitto *mosq)
 
 	mosq->last_mid++;
 	if(mosq->last_mid == 0) mosq->last_mid++;
-
+	
 	return mosq->last_mid;
 }
 
@@ -280,7 +280,7 @@ int mosquitto_topic_matches_sub(const char *sub, const char *topic, bool *result
 		}
 		if(tpos == tlen-1){
 			/* Check for e.g. foo matching foo/# */
-			if(spos == slen-3
+			if(spos == slen-3 
 					&& local_sub[spos+1] == '/'
 					&& local_sub[spos+2] == '#'){
 				*result = true;
@@ -334,3 +334,4 @@ FILE *_mosquitto_fopen(const char *path, const char *mode)
 	return fopen(path, mode);
 #endif
 }
+

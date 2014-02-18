@@ -73,3 +73,4 @@ int _mosquitto_handle_connack(struct mosquitto *mosq)
 			return MOSQ_ERR_PROTOCOL;
 	}
 }
+

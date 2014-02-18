@@ -4,7 +4,7 @@
 
 MQTTKit is a modern event-driven Objective-C library for [MQTT 3.1][mqtt].
 
-It uses [Mosquitto 1.2.2](http://mosquitto.org) library.
+It uses [Mosquitto 1.2.3](http://mosquitto.org) library.
 
 An iOS application using MQTTKit is available at [MQTTExample](https://github.com/jmesnil/MQTTExample).
 

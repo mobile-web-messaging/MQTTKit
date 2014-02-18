@@ -153,7 +153,6 @@ struct mosquitto {
 	char *tls_psk_identity;
 	bool tls_insecure;
 #endif
-	bool want_read;
 	bool want_write;
 #if defined(WITH_THREADING) && !defined(WITH_BROKER)
 	pthread_mutex_t callback_mutex;

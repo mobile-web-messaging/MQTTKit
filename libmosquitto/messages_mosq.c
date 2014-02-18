@@ -317,3 +317,4 @@ int mosquitto_max_inflight_messages_set(struct mosquitto *mosq, unsigned int max
 
 	return MOSQ_ERR_SUCCESS;
 }
+

@@ -92,3 +92,4 @@ time_t mosquitto_time(void)
 	return time(NULL);
 #endif
 }
+

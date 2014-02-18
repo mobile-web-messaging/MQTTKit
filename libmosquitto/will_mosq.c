@@ -125,3 +125,4 @@ int _mosquitto_will_clear(struct mosquitto *mosq)
 
 	return MOSQ_ERR_SUCCESS;
 }
+

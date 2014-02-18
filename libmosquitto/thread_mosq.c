@@ -53,7 +53,7 @@ int mosquitto_loop_stop(struct mosquitto *mosq, bool force)
 {
 #ifdef WITH_THREADING
 	if(!mosq) return MOSQ_ERR_INVAL;
-
+	
 	if(force){
 		pthread_cancel(mosq->thread_id);
 	}
@@ -88,3 +88,4 @@ void *_mosquitto_thread_main(void *obj)
 	return obj;
 }
 #endif
+

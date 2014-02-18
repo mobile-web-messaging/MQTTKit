@@ -224,3 +224,4 @@ int _mosquitto_send_unsubscribe(struct mosquitto *mosq, int *mid, bool dup, cons
 #endif
 	return _mosquitto_packet_queue(mosq, packet);
 }
+

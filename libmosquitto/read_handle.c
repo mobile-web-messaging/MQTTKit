@@ -120,6 +120,10 @@ int _mosquitto_handle_publish(struct mosquitto *mosq)
 	message->msg.payloadlen = mosq->in_packet.remaining_length - mosq->in_packet.pos;
 	if(message->msg.payloadlen){
 		message->msg.payload = _mosquitto_calloc(message->msg.payloadlen+1, sizeof(uint8_t));
+		if(!message->msg.payload){
+			_mosquitto_message_cleanup(&message);
+			return MOSQ_ERR_NOMEM;
+		}
 		rc = _mosquitto_read_bytes(&mosq->in_packet, message->msg.payload, message->msg.payloadlen);
 		if(rc){
 			_mosquitto_message_cleanup(&message);
@@ -157,12 +161,14 @@ int _mosquitto_handle_publish(struct mosquitto *mosq)
 			return rc;
 		case 2:
 			rc = _mosquitto_send_pubrec(mosq, message->msg.mid);
-			message->state = mosq_ms_wait_for_pubrel;
 			pthread_mutex_lock(&mosq->message_mutex);
+			message->state = mosq_ms_wait_for_pubrel;
 			_mosquitto_message_queue(mosq, message, true);
 			pthread_mutex_unlock(&mosq->message_mutex);
 			return rc;
 		default:
+			_mosquitto_message_cleanup(&message);
 			return MOSQ_ERR_PROTOCOL;
 	}
 }
+

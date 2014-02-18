@@ -56,7 +56,7 @@ typedef int ssize_t;
 #include "util_mosq.h"
 #include "will_mosq.h"
 
-#if !defined(WIN32) && defined(__SYMBIAN32__)
+#if !defined(WIN32) && !defined(__SYMBIAN32__)
 #define HAVE_PSELECT
 #endif
 
@@ -261,13 +261,13 @@ int mosquitto_username_pw_set(struct mosquitto *mosq, const char *username, cons
 int mosquitto_reconnect_delay_set(struct mosquitto *mosq, unsigned int reconnect_delay, unsigned int reconnect_delay_max, bool reconnect_exponential_backoff)
 {
 	if(!mosq) return MOSQ_ERR_INVAL;
-
+	
 	mosq->reconnect_delay = reconnect_delay;
 	mosq->reconnect_delay_max = reconnect_delay_max;
 	mosq->reconnect_exponential_backoff = reconnect_exponential_backoff;
-
+	
 	return MOSQ_ERR_SUCCESS;
-
+	
 }
 
 void _mosquitto_destroy(struct mosquitto *mosq)
@@ -461,7 +461,7 @@ static int _mosquitto_reconnect(struct mosquitto *mosq, bool blocking)
 	mosq->ping_t = 0;
 
 	_mosquitto_packet_cleanup(&mosq->in_packet);
-
+		
 	pthread_mutex_lock(&mosq->current_out_packet_mutex);
 	pthread_mutex_lock(&mosq->out_packet_mutex);
 
@@ -663,7 +663,7 @@ int mosquitto_tls_set(struct mosquitto *mosq, const char *cafile, const char *ca
 			}
 			if(mosq->tls_certfile){
 				_mosquitto_free(mosq->tls_certfile);
-				mosq->tls_capath = NULL;
+				mosq->tls_certfile = NULL;
 			}
 			return MOSQ_ERR_INVAL;
 		}
@@ -894,7 +894,7 @@ int mosquitto_loop_forever(struct mosquitto *mosq, int timeout, int max_packets)
 			}else{
 				reconnects++;
 			}
-
+				
 #ifdef WIN32
 			Sleep(reconnect_delay*1000);
 #else
@@ -1221,3 +1221,4 @@ int mosquitto_sub_topic_tokens_free(char ***topics, int count)
 
 	return MOSQ_ERR_SUCCESS;
 }
+

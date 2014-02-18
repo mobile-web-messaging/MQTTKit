@@ -65,7 +65,7 @@ extern "C" {
 
 #define LIBMOSQUITTO_MAJOR 1
 #define LIBMOSQUITTO_MINOR 2
-#define LIBMOSQUITTO_REVISION 2
+#define LIBMOSQUITTO_REVISION 3
 /* LIBMOSQUITTO_VERSION_NUMBER looks like 1002001 for e.g. version 1.2.1. */
 #define LIBMOSQUITTO_VERSION_NUMBER (LIBMOSQUITTO_MAJOR*1000000+LIBMOSQUITTO_MINOR*1000+LIBMOSQUITTO_REVISION)
 
@@ -117,11 +117,11 @@ struct mosquitto;
 
 /*
  * Topic: Threads
- *	libmosquitto provides thread safe operation.
+ *	libmosquitto provides thread safe operation. 
  */
 /***************************************************
  * Important note
- *
+ * 
  * The following functions that deal with network operations will return
  * MOSQ_ERR_SUCCESS on success, but this does not mean that the operation has
  * taken place. An attempt will be made to write the network data, but if the
@@ -220,7 +220,7 @@ libmosq_EXPORT int mosquitto_lib_cleanup(void);
  */
 libmosq_EXPORT struct mosquitto *mosquitto_new(const char *id, bool clean_session, void *obj);
 
-/*
+/* 
  * Function: mosquitto_destroy
  *
  * Use to free memory associated with a mosquitto client instance.
@@ -262,7 +262,7 @@ libmosq_EXPORT void mosquitto_destroy(struct mosquitto *mosq);
  */
 libmosq_EXPORT int mosquitto_reinitialise(struct mosquitto *mosq, const char *id, bool clean_session, void *obj);
 
-/*
+/* 
  * Function: mosquitto_will_set
  *
  * Configure will information for a mosquitto instance. By default, clients do
@@ -287,7 +287,7 @@ libmosq_EXPORT int mosquitto_reinitialise(struct mosquitto *mosq, const char *id
  */
 libmosq_EXPORT int mosquitto_will_set(struct mosquitto *mosq, const char *topic, int payloadlen, const void *payload, int qos, bool retain);
 
-/*
+/* 
  * Function: mosquitto_will_clear
  *
  * Remove a previously configured will. This must be called before calling
@@ -358,7 +358,7 @@ libmosq_EXPORT int mosquitto_connect(struct mosquitto *mosq, const char *host, i
  *
  * Connect to an MQTT broker. This extends the functionality of
  * <mosquitto_connect> by adding the bind_address parameter. Use this function
- * if you need to restrict network communication over a particular interface.
+ * if you need to restrict network communication over a particular interface. 
  *
  * Parameters:
  * 	mosq -         a valid mosquitto instance.
@@ -424,7 +424,7 @@ libmosq_EXPORT int mosquitto_connect_async(struct mosquitto *mosq, const char *h
  *
  * This extends the functionality of <mosquitto_connect_async> by adding the
  * bind_address parameter. Use this function if you need to restrict network
- * communication over a particular interface.
+ * communication over a particular interface. 
  *
  * May be called before or after <mosquitto_loop_start>.
  *
@@ -460,7 +460,7 @@ libmosq_EXPORT int mosquitto_connect_bind_async(struct mosquitto *mosq, const ch
  * connection has been lost. It uses the values that were provided in the
  * <mosquitto_connect> call. It must not be called before
  * <mosquitto_connect>.
- *
+ * 
  * Parameters:
  * 	mosq - a valid mosquitto instance.
  *
@@ -491,7 +491,7 @@ libmosq_EXPORT int mosquitto_reconnect(struct mosquitto *mosq);
  * connection has been lost. It uses the values that were provided in the
  * <mosquitto_connect> or <mosquitto_connect_async> calls. It must not be
  * called before <mosquitto_connect>.
- *
+ * 
  * Parameters:
  * 	mosq - a valid mosquitto instance.
  *
@@ -528,11 +528,11 @@ libmosq_EXPORT int mosquitto_reconnect_async(struct mosquitto *mosq);
  */
 libmosq_EXPORT int mosquitto_disconnect(struct mosquitto *mosq);
 
-/*
+/* 
  * Function: mosquitto_publish
  *
  * Publish a message on a given topic.
- *
+ * 
  * Parameters:
  * 	mosq -       a valid mosquitto instance.
  * 	mid -        pointer to an int. If not NULL, the function will set this
@@ -559,7 +559,7 @@ libmosq_EXPORT int mosquitto_disconnect(struct mosquitto *mosq);
  *                          broker.
  * 	MOSQ_ERR_PAYLOAD_SIZE - if payloadlen is too large.
  *
- * See Also:
+ * See Also: 
  *	<mosquitto_max_inflight_messages_set>
  */
 libmosq_EXPORT int mosquitto_publish(struct mosquitto *mosq, int *mid, const char *topic, int payloadlen, const void *payload, int qos, bool retain);
@@ -629,7 +629,7 @@ libmosq_EXPORT int mosquitto_message_copy(struct mosquitto_message *dst, const s
 
 /*
  * Function: mosquitto_message_free
- *
+ * 
  * Completely free a mosquitto_message struct.
  *
  * Parameters:
@@ -660,14 +660,15 @@ libmosq_EXPORT void mosquitto_message_free(struct mosquitto_message **message);
  * <mosquitto_loop_misc>.
  *
  * Threads:
- *
+ *	
  * Parameters:
  *	mosq -        a valid mosquitto instance.
  *	timeout -     Maximum number of milliseconds to wait for network activity
  *	              in the select() call before timing out. Set to 0 for instant
  *	              return.  Set negative to use the default of 1000ms.
- *	max_packets - this parameter is currently unused.
- *
+ *	max_packets - this parameter is currently unused and should be set to 1 for
+ *	              future compatibility.
+ * 
  * Returns:
  *	MOSQ_ERR_SUCCESS -   on success.
  * 	MOSQ_ERR_INVAL -     if the input parameters were invalid.
@@ -700,7 +701,8 @@ libmosq_EXPORT int mosquitto_loop(struct mosquitto *mosq, int timeout, int max_p
  *	timeout -     Maximum number of milliseconds to wait for network activity
  *	              in the select() call before timing out. Set to 0 for instant
  *	              return.  Set negative to use the default of 1000ms.
- *	max_packets - this parameter is currently unused.
+ *	max_packets - this parameter is currently unused and should be set to 1 for
+ *	              future compatibility.
  *
  * Returns:
  *	MOSQ_ERR_SUCCESS -   on success.
@@ -787,7 +789,8 @@ libmosq_EXPORT int mosquitto_socket(struct mosquitto *mosq);
  *
  * Parameters:
  *	mosq -        a valid mosquitto instance.
- *	max_packets - this parameter is currently unused.
+ *	max_packets - this parameter is currently unused and should be set to 1 for
+ *	              future compatibility.
  *
  * Returns:
  *	MOSQ_ERR_SUCCESS -   on success.
@@ -816,7 +819,8 @@ libmosq_EXPORT int mosquitto_loop_read(struct mosquitto *mosq, int max_packets);
  *
  * Parameters:
  *	mosq -        a valid mosquitto instance.
- *	max_packets - this parameter is currently unused.
+ *	max_packets - this parameter is currently unused and should be set to 1 for
+ *	              future compatibility.
  *
  * Returns:
  *	MOSQ_ERR_SUCCESS -   on success.
@@ -1011,7 +1015,7 @@ libmosq_EXPORT int mosquitto_tls_opts_set(struct mosquitto *mosq, int cert_reqs,
  */
 libmosq_EXPORT int mosquitto_tls_psk_set(struct mosquitto *mosq, const char *psk, const char *identity, const char *ciphers);
 
-/*
+/* 
  * Function: mosquitto_connect_callback_set
  *
  * Set the connect callback. This is called when the broker sends a CONNACK
@@ -1034,13 +1038,13 @@ libmosq_EXPORT int mosquitto_tls_psk_set(struct mosquitto *mosq, const char *psk
  * * 4-255 - reserved for future use
  */
 libmosq_EXPORT void mosquitto_connect_callback_set(struct mosquitto *mosq, void (*on_connect)(struct mosquitto *, void *, int));
-
+ 
 /*
  * Function: mosquitto_disconnect_callback_set
  *
  * Set the disconnect callback. This is called when the broker has received the
  * DISCONNECT command and has disconnected the client.
- *
+ * 
  * Parameters:
  *  mosq -          a valid mosquitto instance.
  *  on_disconnect - a callback function in the following form:
@@ -1054,13 +1058,13 @@ libmosq_EXPORT void mosquitto_connect_callback_set(struct mosquitto *mosq, void 
  *         indicates that the disconnect is unexpected.
  */
 libmosq_EXPORT void mosquitto_disconnect_callback_set(struct mosquitto *mosq, void (*on_disconnect)(struct mosquitto *, void *, int));
-
+ 
 /*
  * Function: mosquitto_publish_callback_set
  *
  * Set the publish callback. This is called when a message initiated with
  * <mosquitto_publish> has been sent to the broker successfully.
- *
+ * 
  * Parameters:
  *  mosq -       a valid mosquitto instance.
  *  on_publish - a callback function in the following form:
@@ -1078,7 +1082,7 @@ libmosq_EXPORT void mosquitto_publish_callback_set(struct mosquitto *mosq, void 
  *
  * Set the message callback. This is called when a message is received from the
  * broker.
- *
+ * 
  * Parameters:
  *  mosq -       a valid mosquitto instance.
  *  on_message - a callback function in the following form:
@@ -1101,7 +1105,7 @@ libmosq_EXPORT void mosquitto_message_callback_set(struct mosquitto *mosq, void 
  *
  * Set the subscribe callback. This is called when the broker responds to a
  * subscription request.
- *
+ * 
  * Parameters:
  *  mosq -         a valid mosquitto instance.
  *  on_subscribe - a callback function in the following form:
@@ -1122,7 +1126,7 @@ libmosq_EXPORT void mosquitto_subscribe_callback_set(struct mosquitto *mosq, voi
  *
  * Set the unsubscribe callback. This is called when the broker responds to a
  * unsubscription request.
- *
+ * 
  * Parameters:
  *  mosq -           a valid mosquitto instance.
  *  on_unsubscribe - a callback function in the following form:
@@ -1225,7 +1229,7 @@ libmosq_EXPORT int mosquitto_max_inflight_messages_set(struct mosquitto *mosq, u
  *
  * Set the number of seconds to wait before retrying messages. This applies to
  * publish messages with QoS>0. May be called at any time.
- *
+ * 
  * Parameters:
  *  mosq -          a valid mosquitto instance.
  *  message_retry - the number of seconds to wait for a response before
@@ -1326,7 +1330,7 @@ libmosq_EXPORT const char *mosquitto_connack_string(int connack_code);
  * > char **topics;
  * > int topic_count;
  * > int i;
- * >
+ * > 
  * > mosquitto_sub_topic_tokenise("$SYS/broker/uptime", &topics, &topic_count);
  * >
  * > for(i=0; i<token_count; i++){
