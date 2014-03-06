@@ -94,6 +94,10 @@ NSString *topic;
 {
     dispatch_semaphore_t connected = dispatch_semaphore_create(0);
     
+    client.reconnectDelay = 1;
+    client.reconnectDelayMax = 10;
+    client.reconnectExponentialBackoff = YES;
+    
     [client connectWithCompletionHandler:^(MQTTConnectionReturnCode code) {
         if (code == ConnectionAccepted) {
             dispatch_semaphore_signal(connected);
