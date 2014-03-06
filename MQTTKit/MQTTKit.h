@@ -37,6 +37,7 @@ typedef enum MQTTQualityOfService : NSUInteger {
 
 typedef void (^MQTTSubscriptionCompletionHandler)(NSArray *grantedQos);
 typedef void (^MQTTMessageHandler)(MQTTMessage *message);
+typedef void (^MQTTDisconnectionHandler)(NSUInteger code);
 
 #pragma mark - MQTT Client
 
@@ -52,8 +53,12 @@ typedef void (^MQTTMessageHandler)(MQTTMessage *message);
 @property (readwrite, copy) NSString *username;
 @property (readwrite, copy) NSString *password;
 @property (readwrite, assign) unsigned short keepAlive;
+@property (readwrite, assign) unsigned int reconnectDelay; // in seconds (default is 1)
+@property (readwrite, assign) unsigned int reconnectDelayMax; // in seconds (default is 1)
+@property (readwrite, assign) BOOL reconnectExponentialBackoff; // wheter to backoff exponentially the reconnect attempts (default is NO)
 @property (readwrite, assign) BOOL cleanSession;
 @property (nonatomic, copy) MQTTMessageHandler messageHandler;
+@property (nonatomic, copy) MQTTDisconnectionHandler disconnectionHandler;
 
 + (void) initialize;
 + (NSString*) version;
@@ -66,7 +71,7 @@ typedef void (^MQTTMessageHandler)(MQTTMessage *message);
 - (void) connectWithCompletionHandler:(void (^)(MQTTConnectionReturnCode code))completionHandler;
 - (void) connectToHost: (NSString*)host
      completionHandler:(void (^)(MQTTConnectionReturnCode code))completionHandler;
-- (void) disconnectWithCompletionHandler:(void (^)(NSUInteger code))completionHandler;
+- (void) disconnectWithCompletionHandler:(MQTTDisconnectionHandler)completionHandler;
 - (void) reconnect;
 - (void)setWillData:(NSData *)payload
             toTopic:(NSString *)willTopic

@@ -62,7 +62,6 @@
 
 @property (nonatomic, assign) BOOL connected;
 @property (nonatomic, copy) void (^connectionCompletionHandler)(NSUInteger code);
-@property (nonatomic, copy) void (^disconnectionCompletionHandler)(NSUInteger code);
 @property (nonatomic, strong) NSMutableDictionary *subscriptionHandlers;
 @property (nonatomic, strong) NSMutableDictionary *unsubscriptionHandlers;
 // dictionary of mid -> completion handlers for messages published with a QoS of 1 or 2
@@ -92,8 +91,8 @@ static void on_disconnect(struct mosquitto *mosq, void *obj, int rc)
     MQTTClient* client = (__bridge MQTTClient*)obj;
     LogDebug(@"on_disconnect rc = %d", rc);
     client.connected = NO;
-    if (client.disconnectionCompletionHandler) {
-        client.disconnectionCompletionHandler(rc);
+    if (client.disconnectionHandler) {
+        client.disconnectionHandler(rc);
     }
     [client.publishHandlers removeAllObjects];
     [client.subscriptionHandlers removeAllObjects];
@@ -170,10 +169,12 @@ static void on_unsubscribe(struct mosquitto *mosq, void *obj, int message_id)
 - (MQTTClient*) initWithClientId: (NSString*) clientId {
     if ((self = [super init])) {
         self.clientID = clientId;
-        [self setHost: nil];
-        [self setPort: 1883];
-        [self setKeepAlive: 60];
-        [self setCleanSession: YES]; //NOTE: this isdisable clean to keep the broker remember this client
+        self.port = 1883;
+        self.keepAlive = 60;
+        self.cleanSession = YES;  //NOTE: this isdisable clean to keep the broker remember this client
+        self.reconnectDelay = 1;
+        self.reconnectDelayMax = 1;
+        self.reconnectExponentialBackoff = NO;
 
         self.subscriptionHandlers = [[NSMutableDictionary alloc] init];
         self.unsubscriptionHandlers = [[NSMutableDictionary alloc] init];
@@ -213,15 +214,16 @@ static void on_unsubscribe(struct mosquitto *mosq, void *obj, int message_id)
 
     const char *cstrHost = [self.host cStringUsingEncoding:NSASCIIStringEncoding];
     const char *cstrUsername = NULL, *cstrPassword = NULL;
-
+    
     if (self.username)
         cstrUsername = [self.username cStringUsingEncoding:NSUTF8StringEncoding];
-
+    
     if (self.password)
         cstrPassword = [self.password cStringUsingEncoding:NSUTF8StringEncoding];
-
+    
     // FIXME: check for errors
     mosquitto_username_pw_set(mosq, cstrUsername, cstrPassword);
+    mosquitto_reconnect_delay_set(mosq, self.reconnectDelay, self.reconnectDelayMax, self.reconnectExponentialBackoff);
 
     mosquitto_connect(mosq, cstrHost, self.port, self.keepAlive);
     
@@ -244,8 +246,10 @@ static void on_unsubscribe(struct mosquitto *mosq, void *obj, int message_id)
     mosquitto_reconnect(mosq);
 }
 
-- (void) disconnectWithCompletionHandler:(void (^)(NSUInteger code))completionHandler {
-    self.disconnectionCompletionHandler = completionHandler;
+- (void) disconnectWithCompletionHandler:(MQTTDisconnectionHandler)completionHandler {
+    if (completionHandler) {
+        self.disconnectionHandler = completionHandler;
+    }
     mosquitto_disconnect(mosq);
 }
 
