@@ -14,7 +14,7 @@ On your ```Podfile``` add this project:
 
 ```
 ...
-pod 'MQTTKit', :git => 'https://github.com/jmesnil/MQTTKit.git'
+pod 'MQTTKit', :git => 'https://github.com/mobile-web-messaging/MQTTKit.git'
 ...
 ```
 
