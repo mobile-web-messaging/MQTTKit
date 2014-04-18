@@ -60,7 +60,6 @@
 
 @interface MQTTClient()
 
-@property (nonatomic, assign) BOOL connected;
 @property (nonatomic, copy) void (^connectionCompletionHandler)(NSUInteger code);
 @property (nonatomic, strong) NSMutableDictionary *subscriptionHandlers;
 @property (nonatomic, strong) NSMutableDictionary *unsubscriptionHandlers;
