@@ -65,6 +65,7 @@
 @property (nonatomic, strong) NSMutableDictionary *unsubscriptionHandlers;
 // dictionary of mid -> completion handlers for messages published with a QoS of 1 or 2
 @property (nonatomic, strong) NSMutableDictionary *publishHandlers;
+@property (nonatomic, assign) BOOL connected;
 
 @end
 
