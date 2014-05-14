@@ -232,8 +232,6 @@ static void on_unsubscribe(struct mosquitto *mosq, void *obj, int message_id)
         mosquitto_loop_forever(mosq, 10, 1);
         LogDebug(@"end mosquitto loop");
     });
-
-    self.connected = YES;
 }
 
 - (void)connectToHost:(NSString *)host
