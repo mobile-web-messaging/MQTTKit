@@ -80,7 +80,7 @@ static void on_connect(struct mosquitto *mosq, void *obj, int rc)
 {
     MQTTClient* client = (__bridge MQTTClient*)obj;
     LogDebug(@"on_connect rc = %d", rc);
-    client.connected = YES;
+    client.connected = (rc == ConnectionAccepted);
     if (client.connectionCompletionHandler) {
         client.connectionCompletionHandler(rc);
     }
@@ -232,8 +232,6 @@ static void on_unsubscribe(struct mosquitto *mosq, void *obj, int message_id)
         mosquitto_loop_forever(mosq, 10, 1);
         LogDebug(@"end mosquitto loop");
     });
-
-    self.connected = YES;
 }
 
 - (void)connectToHost:(NSString *)host

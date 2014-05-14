@@ -88,6 +88,8 @@ NSString *topic;
     }];
 
     XCTAssertFalse(gotSignal(connectError, 4));
+    
+    XCTAssertFalse(client.connected);
 }
 
 - (void)testConnectDisconnect
@@ -105,6 +107,7 @@ NSString *topic;
     }];
 
     XCTAssertTrue(gotSignal(connected, 4));
+    XCTAssertTrue(client.connected);
 
     dispatch_semaphore_t disconnected = dispatch_semaphore_create(0);
 
@@ -113,6 +116,7 @@ NSString *topic;
     }];
 
     XCTAssertTrue(gotSignal(disconnected, 4));
+    XCTAssertFalse(client.connected);
 }
 
 - (void)testPublish
