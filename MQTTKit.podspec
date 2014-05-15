@@ -6,7 +6,7 @@ Pod::Spec.new do |s|
   s.homepage     = "http://github.com/jmesnil/MQTTKit"
   s.license      = { :type => 'Apache License, Version 2.0', :file => 'LICENSE' }
   s.author       = { "Jeff Mesnil" => "jmesnil@gmail.com" }
-  s.ios.platform = :ios, '5.0'
+  s.ios.platform = :ios, '6.0'
   s.osx.platform = :osx, '10.9'
   s.source       = { :git => "https://github.com/jmesnil/MQTTKit.git", :tag => "#{s.version}" }
 
