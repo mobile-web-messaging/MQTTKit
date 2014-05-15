@@ -65,6 +65,8 @@ typedef void (^MQTTDisconnectionHandler)(NSUInteger code);
 + (NSString*) version;
 
 - (MQTTClient*) initWithClientId: (NSString *)clientId;
+- (MQTTClient*) initWithClientId: (NSString *)clientId
+                    cleanSession: (BOOL )cleanSession;
 - (void) setMessageRetry: (NSUInteger)seconds;
 
 #pragma mark - Connection

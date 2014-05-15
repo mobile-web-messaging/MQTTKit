@@ -37,7 +37,7 @@ NSString *topic;
 {
     [super setUp];
 
-    client = [[MQTTClient alloc] initWithClientId:@"MQTTKitTests"];
+    client = [[MQTTClient alloc] initWithClientId:[NSString stringWithFormat:@"MQTTKitTests-%@", [[NSUUID UUID] UUIDString]]];
     client.username = @"user";
     client.password = @"password";
     client.host = kHost;
@@ -47,10 +47,16 @@ NSString *topic;
 
 - (void)tearDown
 {
-    [client disconnectWithCompletionHandler:nil];
+    if (client.connected) {
+        dispatch_semaphore_t disconnected = dispatch_semaphore_create(0);
+        [client disconnectWithCompletionHandler:^(NSUInteger code) {
+            dispatch_semaphore_signal(disconnected);
+        }];
+        XCTAssertTrue(gotSignal(disconnected, 4));
+    }
 
 #ifdef M2M
-    [self deleteTopic:topic];
+    //[self deleteTopic:topic];
 #endif
 
     // Put teardown code here. This method is called after the invocation of each test method in the class.
@@ -205,6 +211,51 @@ NSString *topic;
     [client disconnectWithCompletionHandler:nil];
 }
 
+- (void)testTwoClients
+{
+    MQTTClient *subscriber = [[MQTTClient alloc] initWithClientId:@"MQTTKitTests-sub"];
+
+    dispatch_semaphore_t subscribed = dispatch_semaphore_create(0);
+    NSLog(@"connecting subscriber...");
+    [subscriber connectToHost:kHost
+            completionHandler:^(MQTTConnectionReturnCode code) {
+                NSLog(@"subscriber connected");
+                NSLog(@"subscriber subscribing...");
+                [subscriber subscribe:topic
+                              withQos:AtMostOnce
+                    completionHandler:^(NSArray *grantedQos) {
+                        NSLog(@"subscriber subscribed");
+                        dispatch_semaphore_signal(subscribed);
+                    }];
+            }];
+    XCTAssertTrue(gotSignal(subscribed, 4));
+
+    NSString *text = [NSString stringWithFormat:@"Hello, MQTT %d", arc4random()];
+    dispatch_semaphore_t received = dispatch_semaphore_create(0);
+    subscriber.messageHandler = ^(MQTTMessage *message) {
+        XCTAssertTrue([text isEqualToString:message.payloadString]);
+        dispatch_semaphore_signal(received);
+    };
+
+    MQTTClient *publisher = [[MQTTClient alloc] initWithClientId:@"MQTTKitTests-pub"];
+    dispatch_semaphore_t published = dispatch_semaphore_create(0);
+    [publisher connectToHost:kHost
+           completionHandler:^(MQTTConnectionReturnCode code) {
+               [publisher publishString:text toTopic:topic
+                                withQos:AtMostOnce
+                                 retain:YES
+                      completionHandler:^(int mid) {
+                          dispatch_semaphore_signal(published);
+                      }];
+           }];
+    XCTAssertTrue(gotSignal(published, 4));
+
+    XCTAssertTrue(gotSignal(received, 4));
+
+    [publisher disconnectWithCompletionHandler:nil];
+    [subscriber disconnectWithCompletionHandler:nil];
+}
+
 - (void)testUnsubscribe
 {
     dispatch_semaphore_t subscribed = dispatch_semaphore_create(0);
@@ -251,6 +302,71 @@ NSString *topic;
     XCTAssertFalse(gotSignal(received, 2));
 
     [client disconnectWithCompletionHandler:nil];
+}
+
+- (void)testCleanSession
+{
+    MQTTClient *cleanSessionClient = [[MQTTClient alloc] initWithClientId:@"MQTTKitTests-cleanSession2"
+                                                             cleanSession:NO];
+
+    dispatch_semaphore_t subscribed = dispatch_semaphore_create(0);
+    [cleanSessionClient connectToHost:kHost
+                    completionHandler:^(MQTTConnectionReturnCode code) {
+                        [cleanSessionClient subscribe:topic
+                                              withQos:AtLeastOnce
+                                    completionHandler:^(NSArray *grantedQos) {
+                                        dispatch_semaphore_signal(subscribed);
+                                    }];
+                    }];
+    XCTAssertTrue(gotSignal(subscribed, 4));
+
+    dispatch_semaphore_t disconnected = dispatch_semaphore_create(0);
+    [cleanSessionClient disconnectWithCompletionHandler:^(NSUInteger code) {
+        dispatch_semaphore_signal(disconnected);
+    }];
+    XCTAssertTrue(gotSignal(disconnected, 4));
+
+    NSString *text = [NSString stringWithFormat:@"Hello, MQTT for clean session %d", arc4random()];
+
+    cleanSessionClient = [[MQTTClient alloc] initWithClientId:@"MQTTKitTests-cleanSession2"
+                                                 cleanSession:NO];
+    dispatch_semaphore_t received = dispatch_semaphore_create(0);
+    cleanSessionClient.messageHandler = ^(MQTTMessage *message) {
+        XCTAssertTrue([text isEqualToString:message.payloadString]);
+        dispatch_semaphore_signal(received);
+    };
+
+    XCTAssertFalse(gotSignal(received, 4));
+
+    dispatch_semaphore_t published = dispatch_semaphore_create(0);
+    [client connectToHost:kHost
+        completionHandler:^(MQTTConnectionReturnCode code) {
+            [client publishString:text
+                          toTopic:topic
+                          withQos:AtLeastOnce
+                           retain:NO
+                completionHandler:^(int mid) {
+                    dispatch_semaphore_signal(published);
+                }];
+            [client disconnectWithCompletionHandler:nil];
+        }];
+
+    XCTAssertTrue(gotSignal(published, 8));
+
+    dispatch_semaphore_t connected2 = dispatch_semaphore_create(0);
+    [cleanSessionClient connectToHost:kHost
+                    completionHandler:^(MQTTConnectionReturnCode code) {
+                        dispatch_semaphore_signal(connected2);
+                    }];
+
+    XCTAssertTrue(gotSignal(connected2, 4));
+    XCTAssertTrue(gotSignal(received, 4));
+
+    disconnected = dispatch_semaphore_create(0);
+    [cleanSessionClient disconnectWithCompletionHandler:^(NSUInteger code) {
+        dispatch_semaphore_signal(disconnected);
+    }];
+    XCTAssertTrue(gotSignal(disconnected, 4));
 }
 
 @end
