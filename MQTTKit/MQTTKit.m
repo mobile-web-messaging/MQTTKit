@@ -117,17 +117,22 @@ static void on_publish(struct mosquitto *mosq, void *obj, int message_id)
 
 static void on_message(struct mosquitto *mosq, void *obj, const struct mosquitto_message *mosq_msg)
 {
-    NSString *topic = [NSString stringWithUTF8String: mosq_msg->topic];
-    NSData *payload = [NSData dataWithBytes:mosq_msg->payload length:mosq_msg->payloadlen];
-    MQTTMessage *message = [[MQTTMessage alloc] initWithTopic:topic
-                                                      payload:payload
-                                                          qos:mosq_msg->qos
-                                                       retain:mosq_msg->retain
-                                                          mid:mosq_msg->mid];
-    MQTTClient* client = (__bridge MQTTClient*)obj;
-    LogDebug(@"[%@] on message %@", client.clientID, message);
-    if (client.messageHandler) {
-        client.messageHandler(message);
+    // Ensure these objects are cleaned up quickly by an autorelease pool.
+    // The GCD autorelease pool isn't guaranteed to clean this up in any amount of time.
+    // Source: https://developer.apple.com/library/ios/DOCUMENTATION/General/Conceptual/ConcurrencyProgrammingGuide/OperationQueues/OperationQueues.html#//apple_ref/doc/uid/TP40008091-CH102-SW1
+    @autoreleasepool {
+        NSString *topic = [NSString stringWithUTF8String: mosq_msg->topic];
+        NSData *payload = [NSData dataWithBytes:mosq_msg->payload length:mosq_msg->payloadlen];
+        MQTTMessage *message = [[MQTTMessage alloc] initWithTopic:topic
+                                                          payload:payload
+                                                              qos:mosq_msg->qos
+                                                           retain:mosq_msg->retain
+                                                              mid:mosq_msg->mid];
+        MQTTClient* client = (__bridge MQTTClient*)obj;
+        LogDebug(@"[%@] on message %@", client.clientID, message);
+        if (client.messageHandler) {
+            client.messageHandler(message);
+        }
     }
 }
 
