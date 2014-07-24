@@ -7,20 +7,24 @@
 //  Copyright 2012 Nicholas Humfrey. All rights reserved.
 //
 
-typedef enum MQTTConnectionReturnCode : NSUInteger {
+#ifndef NS_DESIGNATED_INITIALIZER
+#define NS_DESIGNATED_INITIALIZER
+#endif
+
+typedef NS_ENUM(NSUInteger, MQTTConnectionReturnCode) {
     ConnectionAccepted,
     ConnectionRefusedUnacceptableProtocolVersion,
     ConnectionRefusedIdentiferRejected,
     ConnectionRefusedServerUnavailable,
     ConnectionRefusedBadUserNameOrPassword,
     ConnectionRefusedNotAuthorized
-} MQTTConnectionReturnCode;
+};
 
-typedef enum MQTTQualityOfService : NSUInteger {
+typedef NS_ENUM(NSUInteger, MQTTQualityOfService) {
     AtMostOnce,
     AtLeastOnce,
     ExactlyOnce
-} MQTTQualityOfService;
+};
 
 #pragma mark - MQTT Message
 
@@ -66,7 +70,7 @@ typedef void (^MQTTDisconnectionHandler)(NSUInteger code);
 
 - (MQTTClient*) initWithClientId: (NSString *)clientId;
 - (MQTTClient*) initWithClientId: (NSString *)clientId
-                    cleanSession: (BOOL )cleanSession;
+                    cleanSession: (BOOL )cleanSession NS_DESIGNATED_INITIALIZER;
 - (void) setMessageRetry: (NSUInteger)seconds;
 
 #pragma mark - Connection
