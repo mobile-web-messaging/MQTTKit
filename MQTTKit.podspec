@@ -9,7 +9,7 @@ Pod::Spec.new do |s|
 
   # for using GCD queue as Objective-C objects
   s.ios.deployment_target = '6.0'
-  s.osx.deploymnet_target = '10.9'
+  s.osx.deployment_target = '10.9'
   
   s.source       = { :git => "https://github.com/jmesnil/MQTTKit.git", :tag => "#{s.version}" }
 
