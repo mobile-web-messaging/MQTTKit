@@ -193,6 +193,7 @@ static void on_unsubscribe(struct mosquitto *mosq, void *obj, int message_id)
         self.subscriptionHandlers = [[NSMutableDictionary alloc] init];
         self.unsubscriptionHandlers = [[NSMutableDictionary alloc] init];
         self.publishHandlers = [[NSMutableDictionary alloc] init];
+        self.cleanSession = cleanSession;
 
         const char* cstrClientId = [self.clientID cStringUsingEncoding:NSUTF8StringEncoding];
 
