@@ -213,7 +213,7 @@ int _mosquitto_topic_wildcard_len_check(const char *str)
 int mosquitto_topic_matches_sub(const char *sub, const char *topic, bool *result)
 {
 	char *local_sub, *local_topic;
-	int slen, tlen;
+	size_t slen, tlen;
 	int spos, tpos;
 	int rc;
 	bool multilevel_wildcard = false;

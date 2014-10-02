@@ -45,7 +45,7 @@ POSSIBILITY OF SUCH DAMAGE.
 int _mosquitto_send_connect(struct mosquitto *mosq, uint16_t keepalive, bool clean_session)
 {
 	struct _mosquitto_packet *packet = NULL;
-	int payloadlen;
+	size_t payloadlen;
 	uint8_t will = 0;
 	uint8_t byte;
 	int rc;
@@ -72,7 +72,7 @@ int _mosquitto_send_connect(struct mosquitto *mosq, uint16_t keepalive, bool cle
 	}
 
 	packet->command = CONNECT;
-	packet->remaining_length = 12+payloadlen;
+	packet->remaining_length = (uint32_t)(12+payloadlen);
 	rc = _mosquitto_packet_alloc(packet);
 	if(rc){
 		_mosquitto_free(packet);
@@ -152,7 +152,7 @@ int _mosquitto_send_subscribe(struct mosquitto *mosq, int *mid, bool dup, const 
 	packet = _mosquitto_calloc(1, sizeof(struct _mosquitto_packet));
 	if(!packet) return MOSQ_ERR_NOMEM;
 
-	packetlen = 2 + 2+strlen(topic) + 1;
+	packetlen = 2 + 2+(uint32_t)strlen(topic) + 1;
 
 	packet->command = SUBSCRIBE | (dup<<3) | (1<<1);
 	packet->remaining_length = packetlen;
@@ -197,7 +197,7 @@ int _mosquitto_send_unsubscribe(struct mosquitto *mosq, int *mid, bool dup, cons
 	packet = _mosquitto_calloc(1, sizeof(struct _mosquitto_packet));
 	if(!packet) return MOSQ_ERR_NOMEM;
 
-	packetlen = 2 + 2+strlen(topic);
+	packetlen = 2 + 2+(uint32_t)strlen(topic);
 
 	packet->command = UNSUBSCRIBE | (dup<<3) | (1<<1);
 	packet->remaining_length = packetlen;
