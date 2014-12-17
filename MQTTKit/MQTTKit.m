@@ -210,6 +210,11 @@ static void on_unsubscribe(struct mosquitto *mosq, void *obj, int message_id)
     return self;
 }
 
+- (void) setMaxInflightMessages:(NSUInteger)maxInflightMessages
+{
+    mosquitto_max_inflight_messages_set(mosq, (unsigned int)maxInflightMessages);
+}
+
 - (void) setMessageRetry: (NSUInteger)seconds
 {
     mosquitto_message_retry_set(mosq, (unsigned int)seconds);
