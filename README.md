@@ -1,12 +1,18 @@
 # MQTTKit
 
-[![Build Status](https://travis-ci.org/mobile-web-messaging/MQTTKit.svg?branch=master)](https://travis-ci.org/mobile-web-messaging/MQTTKit)
-
 MQTTKit is a modern event-driven Objective-C library for [MQTT 3.1][mqtt].
 
 It uses [Mosquitto 1.2.3](http://mosquitto.org) library.
 
 An iOS application using MQTTKit is available at [MQTTExample](https://github.com/jmesnil/MQTTExample).
+
+# Project Status
+
+__This project is _no longer maintained_ ([some context about this decision](http://jmesnil.net/weblog/2015/09/04/stepping-out-from-personal-open-source-projects/)).__
+
+__If you encounter bugs with it or need enhancements, you can fork it and modify it as the project is under the Apache License 2.0.__
+
+[![Build Status](https://travis-ci.org/mobile-web-messaging/MQTTKit.svg?branch=master)](https://travis-ci.org/mobile-web-messaging/MQTTKit)
 
 ## Installation Using CocoaPods
 
