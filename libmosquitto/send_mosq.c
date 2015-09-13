@@ -254,7 +254,7 @@ int _mosquitto_send_simple_command(struct mosquitto *mosq, uint8_t command)
 int _mosquitto_send_real_publish(struct mosquitto *mosq, uint16_t mid, const char *topic, uint32_t payloadlen, const void *payload, int qos, bool retain, bool dup)
 {
 	struct _mosquitto_packet *packet = NULL;
-	int packetlen;
+	size_t packetlen;
 	int rc;
 
 	assert(mosq);
@@ -267,7 +267,7 @@ int _mosquitto_send_real_publish(struct mosquitto *mosq, uint16_t mid, const cha
 
 	packet->mid = mid;
 	packet->command = PUBLISH | ((dup&0x1)<<3) | (qos<<1) | retain;
-	packet->remaining_length = packetlen;
+	packet->remaining_length = (uint32_t)packetlen;
 	rc = _mosquitto_packet_alloc(packet);
 	if(rc){
 		_mosquitto_free(packet);

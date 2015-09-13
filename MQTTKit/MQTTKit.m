@@ -277,7 +277,7 @@ static void on_unsubscribe(struct mosquitto *mosq, void *obj, int message_id)
              retain:(BOOL)retain
 {
     const char* cstrTopic = [willTopic cStringUsingEncoding:NSUTF8StringEncoding];
-    mosquitto_will_set(mosq, cstrTopic, payload.length, payload.bytes, willQos, retain);
+    mosquitto_will_set(mosq, cstrTopic, (int)payload.length, payload.bytes, willQos, retain);
 }
 
 - (void)setWill:(NSString *)payload
@@ -308,7 +308,7 @@ static void on_unsubscribe(struct mosquitto *mosq, void *obj, int message_id)
         [self.publishHandlers setObject:completionHandler forKey:[NSNumber numberWithInt:0]];
     }
     int mid;
-    mosquitto_publish(mosq, &mid, cstrTopic, payload.length, payload.bytes, qos, retain);
+    mosquitto_publish(mosq, &mid, cstrTopic, (int)payload.length, payload.bytes, qos, retain);
     if (completionHandler) {
         if (qos == 0) {
             completionHandler(mid);
