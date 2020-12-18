@@ -55,7 +55,7 @@ typedef void (^MQTTDisconnectionHandler)(NSUInteger code);
 @property (readwrite, assign) unsigned short keepAlive;
 @property (readwrite, assign) unsigned int reconnectDelay; // in seconds (default is 1)
 @property (readwrite, assign) unsigned int reconnectDelayMax; // in seconds (default is 1)
-@property (readwrite, assign) BOOL reconnectExponentialBackoff; // wheter to backoff exponentially the reconnect attempts (default is NO)
+@property (readwrite, assign) BOOL reconnectExponentialBackoff; // whether to backoff exponentially the reconnect attempts (default is NO)
 @property (readwrite, assign) BOOL cleanSession;
 @property (readonly, assign) BOOL connected;
 @property (nonatomic, copy) MQTTMessageHandler messageHandler;
